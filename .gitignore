@@ -1,0 +1,20 @@
+# Environment variables (API keys)
+.env
+pigeon-dashboard/.env
+
+# Node
+node_modules/
+pigeon-dashboard/node_modules/
+pigeon-dashboard/uploads/
+
+# Xcode
+*.xcuserstate
+*.xcuserdatad/
+DerivedData/
+build/
+
+# Certificates
+*.pem
+
+# OS
+.DS_Store

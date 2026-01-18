@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Mayday needs local network access to discover nearby devices for crisis communication.</string>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Mayday uses your location to tag emergency messages and help responders find you.</string>
+
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Mayday uses your location to tag emergency messages and help responders find you.</string>
+
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_pigeon-mesh._tcp</string>
+		<string>_pigeon-mesh._udp</string>
+	</array>
+
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+		<string>bluetooth-peripheral</string>
+		<string>audio</string>
+		<string>processing</string>
+		<string>fetch</string>
+	</array>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mayday records audio during emergencies to help document incidents and assist dispatchers.</string>
+
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Mayday transcribes emergency audio recordings to help dispatchers understand what happened.</string>
+
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.pigeon.mesh.refresh</string>
+		<string>com.pigeon.mesh.processing</string>
+	</array>
+
+	<key>NSSiriUsageDescription</key>
+	<string>Mayday uses Siri to let you trigger panic alerts hands-free during emergencies.</string>
+
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Mayday uses Bluetooth to communicate with nearby devices during emergencies.</string>
+
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Mayday uses Bluetooth to communicate with nearby devices during emergencies.</string>
+
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+
+	<key>CFBundleDisplayName</key>
+	<string>Mayday</string>
+
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>1.1</string>
+
+	<key>CFBundleVersion</key>
+	<string>1</string>
+
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
+	</dict>
+
+	<key>UILaunchScreen</key>
+	<dict/>
+
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+</dict>
+</plist>

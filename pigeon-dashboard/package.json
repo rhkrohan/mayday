@@ -1,0 +1,20 @@
+{
+  "name": "mayday-dashboard",
+  "version": "2.0.0",
+  "description": "Mayday Dispatch Intelligence Dashboard — community safety mesh network for Philadelphia",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.1",
+    "express": "^4.18.2",
+    "multer": "^2.1.1",
+    "openai": "^6.34.0",
+    "socket.io": "^4.8.3",
+    "ws": "^8.20.0"
+  }
+}

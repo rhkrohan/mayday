@@ -1,0 +1,3453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mayday — Dispatch Intelligence</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #000000;
+            --white: #ffffff;
+            --gray-100: #f5f5f5;
+            --gray-200: #e5e5e5;
+            --gray-400: #a3a3a3;
+            --gray-500: #737373;
+            --gray-600: #525252;
+            --gray-700: #404040;
+            --gray-800: #262626;
+            --gray-900: #171717;
+            --red: #ef4444;
+            --red-dark: #dc2626;
+            --orange: #f97316;
+            --orange-dark: #ea580c;
+            --blue: #3b82f6;
+            --blue-dark: #2563eb;
+            --green: #22c55e;
+            --green-dark: #16a34a;
+            --purple: #a855f7;
+            --purple-dark: #9333ea;
+            --yellow: #eab308;
+            --cyan: #06b6d4;
+            --glass-bg: rgba(0, 0, 0, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-hover: rgba(255, 255, 255, 0.12);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--black);
+            color: var(--white);
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ==================== MAP ==================== */
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .leaflet-tile-pane {
+            filter: invert(100%) hue-rotate(180deg) brightness(0.85) contrast(1.2) saturate(0.2);
+        }
+
+        .leaflet-control-attribution { display: none; }
+
+        .leaflet-control-zoom {
+            border: none !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+            margin-bottom: 100px !important;
+            margin-right: 20px !important;
+            margin-left: auto !important;
+        }
+
+        .leaflet-control-zoom a {
+            background: rgba(0,0,0,0.85) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            color: var(--white) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            width: 38px !important;
+            height: 38px !important;
+            line-height: 38px !important;
+            font-size: 17px !important;
+        }
+
+        .leaflet-control-zoom a:first-child {
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .leaflet-control-zoom a:last-child {
+            border-radius: 0 0 12px 12px !important;
+        }
+
+        .leaflet-control-zoom a:hover {
+            background: rgba(30,30,30,0.95) !important;
+        }
+
+        /* ==================== ANIMATIONS ==================== */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.15); }
+        }
+
+        @keyframes panic-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+            50% { transform: scale(1.1); box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        @keyframes panic-ring {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+        }
+
+        @keyframes card-enter {
+            from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ==================== TOP BAR ==================== */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0.4) 80%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .top-bar > * { pointer-events: auto; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            box-shadow: 0 2px 12px rgba(255,255,255,0.15);
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-sub {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--white);
+            opacity: 0.7;
+            margin-left: 12px;
+            font-weight: 500;
+        }
+
+        .top-center {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.alert {
+            background: var(--red);
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: var(--glass-hover);
+            border-color: rgba(255,255,255,0.18);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .btn.danger {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .btn.danger:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .btn.simulate {
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .btn.simulate:hover {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.5);
+        }
+
+        .btn.simulate.active {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.6);
+            color: var(--green);
+        }
+
+        /* ==================== STATS BAR ==================== */
+        .stats-bar {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 3px;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            padding: 5px;
+            border-radius: 22px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 17px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .stat-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .stat-item.active {
+            background: var(--white);
+            color: var(--black);
+        }
+
+        .stat-item.active .stat-label {
+            opacity: 0.5;
+        }
+
+        .stat-icon {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+
+        .stat-icon svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.45;
+            margin-top: 1px;
+            font-weight: 500;
+        }
+
+        /* ==================== RIGHT PANEL (LIVE FEED) ==================== */
+        .right-panel {
+            position: absolute;
+            top: 72px;
+            right: 20px;
+            bottom: 90px;
+            width: 360px;
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+        }
+
+        .right-panel.collapsed {
+            transform: translateX(calc(100% + 30px));
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .panel-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title .count-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 7px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 8px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .panel-close {
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: var(--white);
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+
+        .panel-close:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            scroll-behavior: smooth;
+        }
+
+        .panel-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .panel-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.12);
+            border-radius: 4px;
+        }
+
+        /* Message cards */
+        .msg-card {
+            background: rgba(255,255,255,0.04);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            animation: card-enter 0.3s ease forwards;
+        }
+
+        .msg-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-1px);
+        }
+
+        .msg-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .msg-type-badge {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .msg-type-badge.panic { background: rgba(239,68,68,0.2); color: #fca5a5; }
+        .msg-type-badge.incident-report { background: rgba(249,115,22,0.2); color: #fdba74; }
+        .msg-type-badge.witness-confirm { background: rgba(34,197,94,0.2); color: #86efac; }
+        .msg-type-badge.security-response { background: rgba(59,130,246,0.2); color: #93c5fd; }
+        .msg-type-badge.security-status { background: rgba(59,130,246,0.2); color: #93c5fd; }
+        .msg-type-badge.sos { background: rgba(239,68,68,0.25); color: #fca5a5; }
+        .msg-type-badge.triage { background: rgba(249,115,22,0.2); color: #fdba74; }
+        .msg-type-badge.shelter { background: rgba(59,130,246,0.2); color: #93c5fd; }
+        .msg-type-badge.missing-person { background: rgba(168,85,247,0.2); color: #d8b4fe; }
+        .msg-type-badge.broadcast { background: rgba(34,197,94,0.2); color: #86efac; }
+
+        .msg-time {
+            font-size: 10px;
+            opacity: 0.35;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .msg-sender {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .security-shield {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            background: rgba(59,130,246,0.25);
+            border-radius: 4px;
+            font-size: 9px;
+        }
+
+        .msg-body {
+            font-size: 12px;
+            opacity: 0.55;
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+
+        .severity-low { background: rgba(34,197,94,0.2); color: #86efac; }
+        .severity-med { background: rgba(249,115,22,0.2); color: #fdba74; }
+        .severity-high { background: rgba(239,68,68,0.2); color: #fca5a5; }
+        .severity-crit { background: rgba(239,68,68,0.35); color: #fca5a5; }
+
+        /* ==================== LEFT PANEL (SECURITY & PANICS) ==================== */
+        .left-panel {
+            position: absolute;
+            top: 72px;
+            left: 20px;
+            bottom: 90px;
+            width: 320px;
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+        }
+
+        .left-panel.collapsed {
+            transform: translateX(calc(-100% - 30px));
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .section-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            opacity: 0.35;
+            font-weight: 600;
+            padding: 14px 16px 8px;
+        }
+
+        .guard-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+
+        .guard-card:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .guard-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .guard-avatar.on-duty {
+            background: rgba(59,130,246,0.2);
+            border: 1px solid rgba(59,130,246,0.3);
+        }
+
+        .guard-avatar.responding {
+            background: rgba(249,115,22,0.2);
+            border: 1px solid rgba(249,115,22,0.3);
+        }
+
+        .guard-avatar.off-duty {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .guard-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .guard-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .guard-status {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .guard-status.on-duty { color: var(--blue); }
+        .guard-status.responding { color: var(--orange); }
+        .guard-status.off-duty { opacity: 0.35; }
+
+        .panic-card {
+            margin: 6px 12px;
+            padding: 12px 14px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.15);
+            border-left: 3px solid var(--red);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .panic-card.viewed {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-left: 3px solid rgba(255,255,255,0.15);
+        }
+
+        .panic-card:hover {
+            background: rgba(239,68,68,0.12);
+            border-color: rgba(239,68,68,0.25);
+        }
+
+        .panic-card.viewed:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .panic-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .panic-type {
+            font-size: 12px;
+            font-weight: 600;
+            color: #fca5a5;
+        }
+
+        .panic-severity {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: rgba(239,68,68,0.25);
+            color: #fca5a5;
+        }
+
+        .panic-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 10px;
+            opacity: 0.55;
+        }
+
+        .panic-meta span {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .left-panel-scroll {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .left-panel-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .left-panel-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .left-panel-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.12);
+            border-radius: 4px;
+        }
+
+        .divider {
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            margin: 4px 0;
+        }
+
+        /* ==================== TOGGLE BUTTONS ==================== */
+        .toggle-btn {
+            position: absolute;
+            z-index: 999;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(30,30,30,0.95);
+            transform: translateY(-50%) scale(1.08);
+        }
+
+        .toggle-right {
+            right: 392px;
+            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s;
+        }
+
+        .toggle-right.shifted {
+            right: 20px;
+        }
+
+        .toggle-left {
+            left: 352px;
+            transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s;
+        }
+
+        .toggle-left.shifted {
+            left: 20px;
+        }
+
+        /* ==================== MAP MARKERS ==================== */
+        .panic-marker {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .panic-marker-inner {
+            width: 42px;
+            height: 42px;
+            background: var(--red);
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 800;
+            color: white;
+            animation: panic-pulse 1.5s infinite;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 0 20px rgba(239,68,68,0.5);
+        }
+
+        .panic-marker-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 42px;
+            height: 42px;
+            border: 2px solid rgba(239,68,68,0.6);
+            border-radius: 50%;
+            animation: panic-ring 2s infinite;
+            z-index: 1;
+        }
+
+        .panic-witness-badge {
+            position: absolute;
+            top: -6px;
+            right: -10px;
+            background: var(--green);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(0,0,0,0.6);
+            z-index: 3;
+        }
+
+        .incident-marker {
+            width: 30px;
+            height: 30px;
+            background: var(--orange);
+            border-radius: 50%;
+            border: 2.5px solid rgba(255,255,255,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 3px 12px rgba(249,115,22,0.4);
+        }
+
+        .security-marker {
+            position: relative;
+        }
+
+        .shield-shape {
+            width: 34px;
+            height: 38px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shield-shape svg {
+            width: 34px;
+            height: 38px;
+            filter: drop-shadow(0 3px 8px rgba(59,130,246,0.5));
+        }
+
+        .shield-label {
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            font-weight: 700;
+            white-space: nowrap;
+            background: rgba(0,0,0,0.75);
+            padding: 1px 5px;
+            border-radius: 4px;
+            color: #93c5fd;
+            letter-spacing: 0.3px;
+        }
+
+        .witness-marker {
+            width: 22px;
+            height: 22px;
+            background: var(--green);
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: white;
+            box-shadow: 0 2px 8px rgba(34,197,94,0.4);
+        }
+
+        .sos-marker {
+            width: 0;
+            height: 0;
+            border-left: 16px solid transparent;
+            border-right: 16px solid transparent;
+            border-bottom: 28px solid var(--red);
+            filter: drop-shadow(0 3px 8px rgba(239,68,68,0.5));
+            position: relative;
+        }
+
+        .sos-marker-label {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 900;
+            color: white;
+        }
+
+        .triage-marker {
+            width: 28px;
+            height: 28px;
+            background: var(--orange);
+            border-radius: 6px;
+            border: 2px solid rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            box-shadow: 0 3px 10px rgba(249,115,22,0.4);
+            transform: rotate(45deg);
+        }
+
+        .triage-marker span {
+            transform: rotate(-45deg);
+        }
+
+        .shelter-marker {
+            width: 28px;
+            height: 28px;
+            background: var(--blue);
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 3px 10px rgba(59,130,246,0.4);
+        }
+
+        .missing-marker {
+            width: 28px;
+            height: 28px;
+            background: var(--purple);
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 3px 10px rgba(168,85,247,0.4);
+        }
+
+        .broadcast-marker {
+            width: 28px;
+            height: 28px;
+            background: var(--green);
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            box-shadow: 0 3px 10px rgba(34,197,94,0.4);
+        }
+
+        /* ==================== POPUPS ==================== */
+        .leaflet-popup-content-wrapper {
+            background: rgba(0,0,0,0.92) !important;
+            color: var(--white) !important;
+            border-radius: 16px !important;
+            padding: 0 !important;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+        }
+
+        .leaflet-popup-content {
+            margin: 0 !important;
+            font-family: inherit !important;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(0,0,0,0.92) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+        }
+
+        .leaflet-popup-close-button {
+            color: rgba(255,255,255,0.5) !important;
+            font-size: 18px !important;
+            padding: 6px 8px !important;
+        }
+
+        .popup-inner {
+            padding: 16px;
+            min-width: 220px;
+            max-width: 280px;
+        }
+
+        .popup-type-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .popup-type-tag {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.12);
+        }
+
+        .popup-type-tag.panic { background: rgba(239,68,68,0.25); color: #fca5a5; }
+        .popup-type-tag.incident-report { background: rgba(249,115,22,0.25); color: #fdba74; }
+        .popup-type-tag.witness-confirm { background: rgba(34,197,94,0.25); color: #86efac; }
+        .popup-type-tag.security-response { background: rgba(59,130,246,0.25); color: #93c5fd; }
+        .popup-type-tag.sos { background: rgba(239,68,68,0.3); color: #fca5a5; }
+        .popup-type-tag.triage { background: rgba(249,115,22,0.25); color: #fdba74; }
+        .popup-type-tag.shelter { background: rgba(59,130,246,0.25); color: #93c5fd; }
+        .popup-type-tag.missing-person { background: rgba(168,85,247,0.25); color: #d8b4fe; }
+        .popup-type-tag.broadcast { background: rgba(34,197,94,0.25); color: #86efac; }
+
+        .popup-timestamp {
+            font-size: 10px;
+            opacity: 0.35;
+        }
+
+        .popup-sender {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+
+        .popup-role {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            opacity: 0.4;
+            margin-bottom: 10px;
+        }
+
+        .popup-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 10px 0;
+        }
+
+        .popup-detail-row {
+            font-size: 12px;
+            line-height: 1.6;
+            margin: 4px 0;
+        }
+
+        .popup-detail-label {
+            opacity: 0.4;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .popup-coords {
+            font-size: 10px;
+            opacity: 0.3;
+            margin-top: 10px;
+            font-family: 'SF Mono', Monaco, Menlo, monospace;
+            background: rgba(255,255,255,0.04);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* ==================== EMPTY STATE ==================== */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            opacity: 0.3;
+            padding: 40px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state-text {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .empty-state-sub {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 1200px) {
+            .left-panel { width: 280px; }
+            .toggle-left { left: 312px; }
+        }
+
+        @media (max-width: 900px) {
+            .left-panel, .toggle-left { display: none; }
+            .right-panel { width: 300px; }
+            .toggle-right { right: 332px; }
+            .logo-sub { display: none; }
+            .camera-panel { min-width: 400px; width: calc(100% - 360px - 40px); }
+        }
+
+        @media (max-width: 600px) {
+            .right-panel { width: calc(100% - 40px); right: 20px; }
+            .toggle-right { display: none; }
+            .stats-bar { max-width: calc(100% - 32px); overflow-x: auto; }
+            .camera-panel { min-width: unset; width: calc(100% - 40px); left: 20px; transform: none; }
+        }
+
+        /* ==================== INCIDENT DETAIL VIEW ==================== */
+        .incident-detail { padding: 16px; }
+
+        .incident-back {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 12px; background: rgba(255,255,255,0.08);
+            border: none; border-radius: 8px; color: var(--white);
+            font-size: 12px; font-weight: 500; cursor: pointer;
+            margin-bottom: 14px; font-family: inherit;
+            transition: background 0.15s;
+        }
+        .incident-back:hover { background: rgba(255,255,255,0.15); }
+
+        .incident-header {
+            padding: 16px; background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2); border-radius: 14px;
+            margin-bottom: 14px;
+        }
+        .incident-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .incident-type { font-size: 16px; font-weight: 700; color: #fca5a5; }
+        .incident-sev { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 8px; background: rgba(239,68,68,0.3); color: #fca5a5; }
+        .incident-sender { font-size: 13px; opacity: 0.7; margin-bottom: 4px; }
+        .incident-time { font-size: 11px; opacity: 0.4; }
+        .incident-desc { font-size: 13px; opacity: 0.8; margin-top: 8px; line-height: 1.5; }
+
+        .incident-section {
+            margin-bottom: 14px;
+        }
+        .incident-section-label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+            opacity: 0.35; font-weight: 600; margin-bottom: 8px;
+        }
+        .incident-transcript {
+            padding: 12px; background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.2); border-radius: 12px;
+            font-size: 13px; color: #93c5fd; line-height: 1.6;
+        }
+        .incident-transcript-label {
+            font-size: 10px; font-weight: 700; color: #60a5fa;
+            text-transform: uppercase; margin-bottom: 6px;
+        }
+
+        .incident-ai {
+            padding: 12px; background: rgba(168,85,247,0.1);
+            border: 1px solid rgba(168,85,247,0.2); border-radius: 12px;
+        }
+        .incident-ai-label {
+            font-size: 10px; font-weight: 700; color: #a855f7;
+            text-transform: uppercase; margin-bottom: 8px;
+        }
+        .incident-ai-threat {
+            display: inline-block; padding: 3px 10px; border-radius: 6px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            color: #fff; margin-bottom: 8px;
+        }
+        .incident-ai-summary { font-size: 13px; color: #ddd6fe; line-height: 1.5; margin-bottom: 8px; }
+        .incident-ai-response {
+            padding: 8px 10px; background: rgba(168,85,247,0.15);
+            border-radius: 8px; font-size: 12px; color: #c4b5fd;
+        }
+        .incident-ai-items { list-style: none; padding: 0; margin: 8px 0 0; }
+        .incident-ai-items li {
+            font-size: 12px; color: #c4b5fd; padding: 3px 0;
+            display: flex; align-items: flex-start; gap: 6px;
+        }
+        .incident-ai-items li::before { content: '\25B8'; color: #a855f7; flex-shrink: 0; margin-top: 1px; }
+
+        .incident-timeline { list-style: none; padding: 0; margin: 0; }
+        .incident-timeline li {
+            position: relative; padding: 8px 0 8px 20px;
+            font-size: 12px; opacity: 0.7; border-left: 2px solid rgba(255,255,255,0.1);
+        }
+        .incident-timeline li::before {
+            content: ''; position: absolute; left: -5px; top: 12px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--gray-500); border: 2px solid var(--gray-800);
+        }
+        .incident-timeline li.panic::before { background: var(--red); }
+        .incident-timeline li.witness-confirm::before { background: var(--green); }
+        .incident-timeline li.security-response::before { background: var(--blue); }
+        .incident-timeline li.incident-report::before { background: var(--orange); }
+        .incident-tl-time { font-size: 10px; opacity: 0.4; }
+        .incident-tl-sender { font-weight: 600; }
+
+        .incident-cam-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; background: rgba(255,255,255,0.04);
+            border-radius: 10px; margin-bottom: 6px; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.06); transition: all 0.15s;
+        }
+        .incident-cam-card:hover { background: rgba(255,255,255,0.08); }
+        .incident-cam-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: rgba(239,68,68,0.15); display: flex;
+            align-items: center; justify-content: center; font-size: 14px;
+        }
+        .incident-cam-name { font-size: 13px; font-weight: 600; }
+        .incident-cam-dist { font-size: 11px; opacity: 0.4; }
+
+        /* Camera Fullscreen Overlay */
+        .camera-fullscreen-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 9999;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .camera-fullscreen-overlay video {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 16px;
+            box-shadow: 0 0 60px rgba(0,0,0,0.8);
+        }
+        .camera-fullscreen-overlay .fs-header {
+            position: absolute;
+            top: 24px; left: 32px; right: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .camera-fullscreen-overlay .fs-title {
+            font-size: 16px; font-weight: 600; color: var(--white);
+        }
+        .camera-fullscreen-overlay .fs-close {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+            color: white; font-size: 18px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .camera-fullscreen-overlay .fs-close:hover { background: rgba(255,255,255,0.2); }
+        .camera-expand-btn {
+            position: absolute; top: 8px; right: 8px;
+            width: 28px; height: 28px; border-radius: 6px;
+            background: rgba(0,0,0,0.6); border: none;
+            color: white; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s;
+            z-index: 2;
+        }
+        .camera-feed:hover .camera-expand-btn { opacity: 1; }
+
+        /* Camera Panel — positioned between left and right panels */
+        .camera-panel {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            display: none;
+            max-width: 780px;
+            width: calc(100% - 420px - 400px - 40px);
+            min-width: 600px;
+        }
+
+        .camera-panel.active {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .camera-panel-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 14px;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .camera-panel-header .cam-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--red);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .camera-panel-header span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .camera-grid {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .camera-grid::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .camera-grid::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+        }
+
+        .camera-card {
+            min-width: 260px;
+            max-width: 320px;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+
+        .camera-card.activated {
+            border-color: var(--red);
+            box-shadow: 0 0 20px rgba(239,68,68,0.3);
+        }
+
+        .camera-feed {
+            width: 100%;
+            height: 170px;
+            background: var(--gray-900);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .camera-feed img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-feed .no-feed {
+            color: var(--gray-500);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .camera-feed .live-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 8px;
+            background: rgba(239,68,68,0.9);
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .camera-feed .live-badge .rec-dot {
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        .camera-info {
+            padding: 10px 12px;
+        }
+
+        .camera-info .cam-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .camera-info .cam-status {
+            font-size: 11px;
+            color: var(--gray-400);
+        }
+
+        .camera-info .cam-reason {
+            font-size: 11px;
+            color: var(--red);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .camera-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .camera-toggle-btn:hover {
+            background: var(--glass-hover);
+            border-color: rgba(255,255,255,0.18);
+            transform: translateY(-1px);
+        }
+
+        .camera-toggle-btn .cam-count {
+            background: var(--red);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 8px;
+            min-width: 18px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="logo">
+            <img src="/logo.png" alt="Mayday" style="width:40px;height:40px;border-radius:11px;">
+            <span class="logo-text">Mayday</span>
+            <span class="logo-sub">Dispatch Intelligence</span>
+        </div>
+
+        <div class="top-center">
+            <div class="status-badge">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Monitoring</span>
+            </div>
+        </div>
+
+        <div class="top-actions">
+            <button class="camera-toggle-btn" id="cameraToggleBtn" onclick="toggleCameraPanel()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                Cameras
+                <span class="cam-count" id="camCount" style="display:none;">0</span>
+            </button>
+            <button class="btn simulate" id="simulateBtn" onclick="toggleSimulation()">
+                <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <span id="simulateBtnText">Simulate</span>
+            </button>
+            <button class="btn danger" onclick="clearAll()">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                Clear
+            </button>
+        </div>
+    </div>
+
+    <!-- Left Panel Toggle -->
+    <button class="toggle-btn toggle-left" id="toggleLeft" onclick="toggleLeftPanel()">&#9664;</button>
+
+    <!-- Left Panel: Command Center -->
+    <div class="left-panel" id="leftPanel">
+        <div class="panel-header">
+            <div class="panel-title">
+                Command Center
+                <span class="count-badge" id="securityCountBadge">0</span>
+            </div>
+            <button class="panel-close" onclick="toggleLeftPanel()">&times;</button>
+        </div>
+        <div class="left-panel-scroll" id="leftPanelContent">
+            <div class="empty-state">
+                <div class="empty-state-icon" style="font-size:28px;opacity:0.5;">--</div>
+                <div class="empty-state-text">No active personnel</div>
+                <div class="empty-state-sub">Security data will appear here</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel Toggle -->
+    <button class="toggle-btn toggle-right" id="toggleRight" onclick="toggleRightPanel()">&#9654;</button>
+
+    <!-- Right Panel: Live Feed -->
+    <div class="right-panel" id="rightPanel">
+        <div class="panel-header">
+            <div class="panel-title">
+                Live Feed
+                <span class="count-badge" id="feedCountBadge">0</span>
+            </div>
+            <button class="panel-close" onclick="toggleRightPanel()">&times;</button>
+        </div>
+        <div class="panel-content" id="feedContent">
+            <div class="empty-state">
+                <div class="empty-state-icon" style="font-size:28px;opacity:0.5;">--</div>
+                <div class="empty-state-text">Awaiting transmissions</div>
+                <div class="empty-state-sub">Messages will stream here in real-time</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Panel -->
+    <div class="camera-panel" id="cameraPanel">
+        <div class="camera-panel-header" onclick="toggleCameraPanel()">
+            <div class="cam-dot"></div>
+            <span id="cameraPanelTitle">Cameras — 0 activated</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="camera-grid" id="cameraGrid"></div>
+    </div>
+
+    <!-- Bottom Stats Bar -->
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-item" data-filter="panic" onclick="toggleFilter('panic')">
+            <div class="stat-icon" style="color: var(--red);">
+                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="statPanic">0</div>
+                <div class="stat-label">Panics</div>
+            </div>
+        </div>
+        <div class="stat-item" data-filter="incident-report" onclick="toggleFilter('incident-report')">
+            <div class="stat-icon" style="color: var(--orange);">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="statIncident">0</div>
+                <div class="stat-label">Incidents</div>
+            </div>
+        </div>
+        <div class="stat-item" data-filter="security" onclick="toggleFilter('security')">
+            <div class="stat-icon" style="color: var(--blue);"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+            <div class="stat-content">
+                <div class="stat-value" id="statSecurity">0</div>
+                <div class="stat-label">Security</div>
+            </div>
+        </div>
+        <div class="stat-item" data-filter="witness-confirm" onclick="toggleFilter('witness-confirm')">
+            <div class="stat-icon" style="color: var(--green);">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="statWitness">0</div>
+                <div class="stat-label">Witnesses</div>
+            </div>
+        </div>
+        <div class="stat-item" data-filter="all" onclick="toggleFilter('all')">
+            <div class="stat-icon" style="color: var(--white);">
+                <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 7V5a4 4 0 00-8 0v2"></path></svg>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="statDevices">0</div>
+                <div class="stat-label">Devices</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- socket.io removed, using raw WebSocket for WebRTC signaling -->
+    <script>
+        // ==================== STATE ====================
+        var map;
+        var markerLayers = {};
+        var activeFilter = null;
+        var simulating = false;
+        var simInterval = null;
+        var simPhase = 0;
+        var lastMessageIds = new Set();
+        var rightPanelOpen = true;
+        var leftPanelOpen = true;
+        // Track generated panic IDs for simulation witness/response linking
+        var simPanicIds = [];
+
+        // Philadelphia landmarks for simulation
+        var PHILLY_LOCATIONS = [
+            { name: 'UPenn Campus', lat: 39.9522, lng: -75.1932 },
+            { name: 'Temple University', lat: 39.9812, lng: -75.1486 },
+            { name: 'Drexel University', lat: 39.9566, lng: -75.1899 },
+            { name: '30th Street Station', lat: 39.9557, lng: -75.1821 },
+            { name: 'City Hall', lat: 39.9524, lng: -75.1636 },
+            { name: 'Rittenhouse Square', lat: 39.9496, lng: -75.1718 },
+            { name: 'Reading Terminal', lat: 39.9533, lng: -75.1590 },
+            { name: 'SEPTA Suburban Station', lat: 39.9538, lng: -75.1678 },
+            { name: 'Jefferson Station', lat: 39.9523, lng: -75.1581 },
+            { name: 'Broad Street Line', lat: 39.9450, lng: -75.1636 },
+            { name: 'Penn Museum', lat: 39.9491, lng: -75.1912 },
+            { name: 'Franklin Field', lat: 39.9502, lng: -75.1903 },
+            { name: 'The Quad', lat: 39.9517, lng: -75.1974 },
+            { name: 'Wharton School', lat: 39.9531, lng: -75.1983 },
+            { name: 'SEPTA 40th St', lat: 39.9562, lng: -75.2013 },
+            { name: 'Philadelphia Museum of Art', lat: 39.9656, lng: -75.1810 },
+            { name: 'LOVE Park', lat: 39.9543, lng: -75.1658 },
+            { name: 'Independence Hall', lat: 39.9489, lng: -75.1500 }
+        ];
+
+        var EMERGENCY_TYPES = ['assault', 'medical', 'fire', 'suspicious_activity', 'theft', 'harassment', 'active_threat', 'accident'];
+        var GUARD_NAMES = ['Officer Chen', 'Officer Martinez', 'Officer Williams', 'Sgt. Patel', 'Officer Kim', 'Officer Thompson', 'Sgt. Davis', 'Officer Robinson'];
+        var CIVILIAN_NAMES = ['Alex M.', 'Jordan T.', 'Sam K.', 'Riley P.', 'Casey B.', 'Morgan L.', 'Drew S.', 'Quinn R.', 'Blake H.', 'Avery N.'];
+
+        // ==================== MAP INIT ====================
+        function initMap() {
+            map = L.map('map', {
+                center: [39.9526, -75.1635],
+                zoom: 14,
+                zoomControl: true,
+                attributionControl: false
+            });
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            markerLayers = {
+                panic: L.layerGroup().addTo(map),
+                'incident-report': L.layerGroup().addTo(map),
+                'witness-confirm': L.layerGroup().addTo(map),
+                'security-response': L.layerGroup().addTo(map),
+                'security-status': L.layerGroup().addTo(map),
+                security: L.layerGroup().addTo(map),
+                sos: L.layerGroup().addTo(map),
+                triage: L.layerGroup().addTo(map),
+                shelter: L.layerGroup().addTo(map),
+                'missing-person': L.layerGroup().addTo(map),
+                broadcast: L.layerGroup().addTo(map),
+                lines: L.layerGroup().addTo(map),
+                zones: L.layerGroup().addTo(map)
+            };
+        }
+
+        // ==================== MARKER CREATION ====================
+        function createPanicMarker(msg) {
+            var severity = msg.severityScore || (msg.data && msg.data.severityScore) || 5;
+            var witnessCount = (msg.data && msg.data.witnessCount) || 0;
+
+            var witnessBadge = '';
+            if (witnessCount > 0) {
+                witnessBadge = '<div class="panic-witness-badge">' + witnessCount + '</div>';
+            }
+            var markerHtml = '<div class="panic-marker">' +
+                '<div class="panic-marker-inner">' + severity + '</div>' +
+                '<div class="panic-marker-ring"></div>' +
+                witnessBadge +
+                '</div>';
+
+            var icon = L.divIcon({
+                html: markerHtml,
+                className: '',
+                iconSize: [46, 46],
+                iconAnchor: [23, 23]
+            });
+
+            return L.marker([msg.latitude, msg.longitude], { icon: icon }).bindPopup(createPopup(msg));
+        }
+
+        function createIncidentMarker(msg) {
+            var icon = L.divIcon({
+                html: '<div class="incident-marker" style="font-size:14px;font-weight:700;">!</div>',
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            return L.marker([msg.latitude, msg.longitude], { icon: icon }).bindPopup(createPopup(msg));
+        }
+
+        function createSecurityMarker(guard) {
+            var firstName = (guard.name || 'Guard').split(' ').pop();
+            var markerHtml = '<div class="security-marker">' +
+                '<div class="shield-shape">' +
+                '<svg viewBox="0 0 34 38" fill="none">' +
+                '<path d="M17 2 L32 8 L32 20 C32 28 25 34 17 37 C9 34 2 28 2 20 L2 8 Z" fill="#2563eb" stroke="rgba(255,255,255,0.8)" stroke-width="2"/>' +
+                '<text x="17" y="25" text-anchor="middle" fill="white" font-size="14" font-weight="bold">S</text>' +
+                '</svg>' +
+                '</div>' +
+                '<div class="shield-label">' + firstName + '</div>' +
+                '</div>';
+
+            var icon = L.divIcon({
+                html: markerHtml,
+                className: '',
+                iconSize: [34, 52],
+                iconAnchor: [17, 38]
+            });
+            var lat = guard.latitude || guard.lat;
+            var lng = guard.longitude || guard.lng;
+            if (!lat || !lng) return null;
+            return L.marker([lat, lng], { icon: icon }).bindPopup(createSecurityPopup(guard));
+        }
+
+        function createWitnessMarker(msg) {
+            var icon = L.divIcon({
+                html: '<div class="witness-marker">&#x2713;</div>',
+                className: '',
+                iconSize: [22, 22],
+                iconAnchor: [11, 11]
+            });
+            return L.marker([msg.latitude, msg.longitude], { icon: icon }).bindPopup(createPopup(msg));
+        }
+
+        function createSOSMarker(msg) {
+            var icon = L.divIcon({
+                html: '<div class="sos-marker"><span class="sos-marker-label">!</span></div>',
+                className: '',
+                iconSize: [32, 28],
+                iconAnchor: [16, 28]
+            });
+            return L.marker([msg.latitude, msg.longitude], { icon: icon }).bindPopup(createPopup(msg));
+        }
+
+        function createTriageMarker(msg) {
+            var icon = L.divIcon({
+                html: '<div class="triage-marker"><span>+</span></div>',
+                className: '',
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+            return L.marker([msg.latitude, msg.longitude], { icon: icon }).bindPopup(createPopup(msg));
+        }
+
+        function createShelterMarker(msg) {
+            var icon = L.divIcon({
+                html: '<div class="shelter-marker" style="font-size:12px;font-weight:700;">H</div>',
+                className: '',
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+            return L.marker([msg.latitude, msg.longitude], { icon: icon }).bindPopup(createPopup(msg));
+        }
+
+        function createMissingMarker(msg) {
+            var icon = L.divIcon({
+                html: '<div class="missing-marker" style="font-size:12px;font-weight:700;">?</div>',
+                className: '',
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+            return L.marker([msg.latitude, msg.longitude], { icon: icon }).bindPopup(createPopup(msg));
+        }
+
+        function createBroadcastMarker(msg) {
+            var icon = L.divIcon({
+                html: '<div class="broadcast-marker" style="font-size:12px;font-weight:700;">B</div>',
+                className: '',
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+            return L.marker([msg.latitude, msg.longitude], { icon: icon }).bindPopup(createPopup(msg));
+        }
+
+        // ==================== POPUPS ====================
+        function formatTime(ts) {
+            if (!ts) return '';
+            var d = new Date(ts);
+            var now = new Date();
+            var diff = (now - d) / 1000;
+            if (diff < 60) return Math.floor(diff) + 's ago';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return d.toLocaleDateString();
+        }
+
+        function formatType(type) {
+            return (type || '').replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        function createPopup(msg) {
+            var severity = msg.severityScore || (msg.data && msg.data.severityScore);
+            var details = '';
+            var data = msg.data || {};
+
+            if (data.emergencyType || msg.emergencyType) {
+                details += '<div class="popup-detail-row"><span class="popup-detail-label">Emergency</span><br>' + escapeHtml(formatType(data.emergencyType || msg.emergencyType)) + '</div>';
+            }
+            if (data.description) {
+                details += '<div class="popup-detail-row"><span class="popup-detail-label">Description</span><br>' + escapeHtml(data.description) + '</div>';
+            }
+            if (data.category) {
+                details += '<div class="popup-detail-row"><span class="popup-detail-label">Category</span><br>' + escapeHtml(data.category) + '</div>';
+            }
+            if (data.missingPersonName) {
+                details += '<div class="popup-detail-row"><span class="popup-detail-label">Missing Person</span><br>' + escapeHtml(data.missingPersonName) + '</div>';
+            }
+            if (data.shelterName) {
+                details += '<div class="popup-detail-row"><span class="popup-detail-label">Shelter</span><br>' + escapeHtml(data.shelterName) + '</div>';
+            }
+            if (data.capacity) {
+                details += '<div class="popup-detail-row"><span class="popup-detail-label">Capacity</span><br>' + escapeHtml(String(data.capacity)) + '</div>';
+            }
+            if (data.message || data.broadcastMessage) {
+                details += '<div class="popup-detail-row"><span class="popup-detail-label">Message</span><br>' + escapeHtml(data.message || data.broadcastMessage) + '</div>';
+            }
+            if (msg.estimatedArrival || data.estimatedArrival) {
+                details += '<div class="popup-detail-row"><span class="popup-detail-label">ETA</span><br>' + escapeHtml(msg.estimatedArrival || data.estimatedArrival) + '</div>';
+            }
+
+            var severityHtml = '';
+            if (severity != null) {
+                var cls = severity >= 8 ? 'severity-crit' : severity >= 6 ? 'severity-high' : severity >= 4 ? 'severity-med' : 'severity-low';
+                severityHtml = ' <span class="severity-badge ' + cls + '">SEV ' + severity + '</span>';
+            }
+
+            var coordsHtml = '';
+            if (msg.latitude) {
+                coordsHtml = '<div class="popup-coords">' + msg.latitude.toFixed(5) + ', ' + msg.longitude.toFixed(5) + '</div>';
+            }
+
+            return '<div class="popup-inner">' +
+                '<div class="popup-type-row">' +
+                '<span class="popup-type-tag ' + (msg.type || '') + '">' + escapeHtml(formatType(msg.type)) + '</span>' +
+                '<span class="popup-timestamp">' + formatTime(msg.timestamp) + '</span>' +
+                '</div>' +
+                '<div class="popup-sender">' + escapeHtml(msg.senderName || 'Unknown') + severityHtml + '</div>' +
+                '<div class="popup-role">' + escapeHtml(msg.senderRole || '') + '</div>' +
+                (details ? '<div class="popup-divider"></div>' + details : '') +
+                coordsHtml +
+                '</div>';
+        }
+
+        function createSecurityPopup(guard) {
+            var statusColor = guard.dutyStatus === 'responding' ? 'var(--orange)' : guard.dutyStatus === 'on_duty' ? 'var(--blue)' : 'var(--gray-500)';
+            var skillsHtml = '';
+            if (guard.skills && guard.skills.length) {
+                skillsHtml = '<div class="popup-divider"></div><div class="popup-detail-row"><span class="popup-detail-label">Skills</span><br>' + escapeHtml(guard.skills.join(', ')) + '</div>';
+            }
+            var respondingHtml = '';
+            if (guard.respondingTo) {
+                respondingHtml = '<div class="popup-detail-row"><span class="popup-detail-label">Responding To</span><br>' + escapeHtml(guard.respondingTo) + '</div>';
+            }
+            var coordsHtml = '';
+            if (guard.latitude) {
+                coordsHtml = '<div class="popup-coords">' + guard.latitude.toFixed(5) + ', ' + guard.longitude.toFixed(5) + '</div>';
+            }
+
+            return '<div class="popup-inner">' +
+                '<div class="popup-type-row">' +
+                '<span class="popup-type-tag security-response">Security</span>' +
+                '<span class="popup-timestamp">' + formatTime(guard.lastSeen) + '</span>' +
+                '</div>' +
+                '<div class="popup-sender">' + escapeHtml(guard.name || 'Unknown') + '</div>' +
+                '<div class="popup-role" style="color:' + statusColor + '">' + escapeHtml((guard.dutyStatus || 'unknown').replace('_', ' ').toUpperCase()) + '</div>' +
+                skillsHtml +
+                respondingHtml +
+                coordsHtml +
+                '</div>';
+        }
+
+        // ==================== DATA FETCHING ====================
+        function fetchData() {
+            Promise.all([
+                fetch('/api/map-data').then(function(r) { return r.json(); }).catch(function() { return []; }),
+                fetch('/api/stats' + (simulating ? '' : '?real=true')).then(function(r) { return r.json(); }).catch(function() { return {}; }),
+                fetch('/api/security').then(function(r) { return r.json(); }).catch(function() { return []; }),
+                fetch('/api/panics').then(function(r) { return r.json(); }).catch(function() { return []; }),
+                fetch('/api/messages?limit=50').then(function(r) { return r.json(); }).catch(function() { return []; })
+            ]).then(function(results) {
+                var mapRes = results[0];
+                var statsRes = results[1];
+                var secRes = results[2];
+                var panicRes = results[3];
+                var msgsRes = results[4];
+
+                // Separate real alerts from simulation data
+                var realMsgs = msgsRes.filter(function(m) { return !m.simulated; });
+                var realMapData = mapRes.filter(function(m) { return !m.simulated; });
+
+                // Left panel always shows only real alerts
+                updateLeftPanel(secRes, panicRes.filter(function(p) { return !p.simulated; }));
+
+                // Feed and map show sim data only when simulating
+                // Don't overwrite the feed if we're viewing an incident detail
+                if (simulating) {
+                    updateStats(statsRes);
+                    updateMap(mapRes, secRes, panicRes);
+                    if (!activeIncidentId) updateFeed(msgsRes);
+                    updateStatusBadge(statsRes, panicRes);
+                } else {
+                    updateStats(statsRes);
+                    updateMap(realMapData, secRes, panicRes.filter(function(p) { return !p.simulated; }));
+                    if (!activeIncidentId) updateFeed(realMsgs);
+                    updateStatusBadge(statsRes, panicRes.filter(function(p) { return !p.simulated; }));
+                }
+            }).catch(function(e) {
+                console.error('Fetch error:', e);
+            });
+        }
+
+        // ==================== UPDATE STATS ====================
+        function updateStats(stats) {
+            animateValue('statPanic', stats.panicAlerts || 0);
+            animateValue('statIncident', stats.incidentReports || 0);
+            animateValue('statSecurity', stats.securityOnDuty || 0);
+            animateValue('statWitness', stats.witnessConfirmations || 0);
+            animateValue('statDevices', stats.connectedDevices || 0);
+        }
+
+        function animateValue(id, newVal) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var current = parseInt(el.textContent) || 0;
+            if (current !== newVal) {
+                el.textContent = newVal;
+                el.style.transform = 'scale(1.2)';
+                setTimeout(function() { el.style.transform = 'scale(1)'; el.style.transition = 'transform 0.2s'; }, 50);
+            }
+        }
+
+        // ==================== UPDATE MAP ====================
+        function updateMap(mapData, security, panics) {
+            Object.keys(markerLayers).forEach(function(key) {
+                markerLayers[key].clearLayers();
+            });
+
+            // Build panic locations index for response lines
+            var panicLocations = {};
+            panics.forEach(function(p) {
+                if (p.latitude && p.longitude) {
+                    panicLocations[p.id] = { lat: p.latitude, lng: p.longitude };
+                }
+            });
+            mapData.filter(function(m) { return m.type === 'panic'; }).forEach(function(m) {
+                if (m.latitude && m.longitude && m.panicId) {
+                    panicLocations[m.panicId] = { lat: m.latitude, lng: m.longitude };
+                }
+            });
+
+            // Danger zones around active panics
+            panics.forEach(function(p) {
+                if (p.latitude && p.longitude) {
+                    var zone = L.circle([p.latitude, p.longitude], {
+                        radius: 150,
+                        color: '#ef4444',
+                        weight: 2,
+                        opacity: 0.4,
+                        fillColor: '#ef4444',
+                        fillOpacity: 0.06,
+                        dashArray: '8, 8'
+                    });
+                    markerLayers.zones.addLayer(zone);
+                }
+            });
+
+            // Map markers
+            mapData.forEach(function(msg) {
+                if (!msg.latitude || !msg.longitude) return;
+                var marker;
+
+                switch (msg.type) {
+                    case 'panic':
+                        marker = createPanicMarker(msg);
+                        if (marker) markerLayers.panic.addLayer(marker);
+                        break;
+                    case 'incident-report':
+                        marker = createIncidentMarker(msg);
+                        if (marker) markerLayers['incident-report'].addLayer(marker);
+                        break;
+                    case 'witness-confirm':
+                        marker = createWitnessMarker(msg);
+                        if (marker) markerLayers['witness-confirm'].addLayer(marker);
+                        break;
+                    case 'security-response':
+                        if (msg.respondingToPanicId && panicLocations[msg.respondingToPanicId]) {
+                            var panicLoc = panicLocations[msg.respondingToPanicId];
+                            var line = L.polyline(
+                                [[msg.latitude, msg.longitude], [panicLoc.lat, panicLoc.lng]],
+                                { color: '#3b82f6', weight: 2.5, opacity: 0.7, dashArray: '6, 8' }
+                            );
+                            markerLayers.lines.addLayer(line);
+                        }
+                        break;
+                    case 'sos':
+                        marker = createSOSMarker(msg);
+                        if (marker) markerLayers.sos.addLayer(marker);
+                        break;
+                    case 'triage':
+                        marker = createTriageMarker(msg);
+                        if (marker) markerLayers.triage.addLayer(marker);
+                        break;
+                    case 'shelter':
+                        marker = createShelterMarker(msg);
+                        if (marker) markerLayers.shelter.addLayer(marker);
+                        break;
+                    case 'missing-person':
+                        marker = createMissingMarker(msg);
+                        if (marker) markerLayers['missing-person'].addLayer(marker);
+                        break;
+                    case 'broadcast':
+                        marker = createBroadcastMarker(msg);
+                        if (marker) markerLayers.broadcast.addLayer(marker);
+                        break;
+                }
+            });
+
+            // Security markers + response lines from guards
+            security.forEach(function(guard) {
+                var m = createSecurityMarker(guard);
+                if (m) {
+                    markerLayers.security.addLayer(m);
+
+                    if (guard.respondingTo && panicLocations[guard.respondingTo]) {
+                        var pLoc = panicLocations[guard.respondingTo];
+                        var lat = guard.latitude || guard.lat;
+                        var lng = guard.longitude || guard.lng;
+                        if (lat && lng) {
+                            var rLine = L.polyline(
+                                [[lat, lng], [pLoc.lat, pLoc.lng]],
+                                { color: '#3b82f6', weight: 3, opacity: 0.8, dashArray: '8, 10' }
+                            );
+                            markerLayers.lines.addLayer(rLine);
+                        }
+                    }
+                }
+            });
+
+            applyFilter();
+        }
+
+        // ==================== UPDATE FEED ====================
+        function updateFeed(messages) {
+            var container = document.getElementById('feedContent');
+            var badge = document.getElementById('feedCountBadge');
+            badge.textContent = messages.length;
+
+            if (messages.length === 0) {
+                while (container.firstChild) container.removeChild(container.firstChild);
+                var emptyDiv = document.createElement('div');
+                emptyDiv.className = 'empty-state';
+                var iconDiv = document.createElement('div');
+                iconDiv.className = 'empty-state-icon';
+                iconDiv.textContent = '--';
+                var textDiv = document.createElement('div');
+                textDiv.className = 'empty-state-text';
+                textDiv.textContent = 'Awaiting transmissions';
+                var subDiv = document.createElement('div');
+                subDiv.className = 'empty-state-sub';
+                subDiv.textContent = 'Messages will stream here in real-time';
+                emptyDiv.appendChild(iconDiv);
+                emptyDiv.appendChild(textDiv);
+                emptyDiv.appendChild(subDiv);
+                container.appendChild(emptyDiv);
+                return;
+            }
+
+            var currentIds = new Set(messages.map(function(m) { return m.id; }));
+
+            var typeLabels = {
+                'panic': 'PANIC',
+                'incident-report': 'INCIDENT',
+                'witness-confirm': 'WITNESS',
+                'security-response': 'RESPONSE',
+                'security-status': 'SECURITY',
+                'sos': 'SOS',
+                'triage': 'TRIAGE',
+                'shelter': 'SHELTER',
+                'missing-person': 'MISSING',
+                'broadcast': 'BROADCAST'
+            };
+
+            // Build feed using DOM methods
+            var frag = document.createDocumentFragment();
+
+            messages.forEach(function(msg, idx) {
+                var isNew = !lastMessageIds.has(msg.id);
+                var icon = typeLabels[msg.type] || msg.type;
+                var severity = msg.data && msg.data.severityScore;
+                var isSecurity = msg.senderRole === 'security' || msg.senderRole === 'admin';
+                var data = msg.data || {};
+
+                var card = document.createElement('div');
+                card.className = 'msg-card';
+                if (isNew) card.style.animationDelay = (idx * 30) + 'ms';
+
+                var msgLat = data.latitude || 0;
+                var msgLng = data.longitude || 0;
+                card.addEventListener('click', (function(lat, lng) {
+                    return function() { flyToMessage(lat, lng); };
+                })(msgLat, msgLng));
+
+                // Top row
+                var topRow = document.createElement('div');
+                topRow.className = 'msg-card-top';
+
+                var typeBadge = document.createElement('span');
+                typeBadge.className = 'msg-type-badge ' + (msg.type || '');
+                typeBadge.textContent = icon;
+                topRow.appendChild(typeBadge);
+
+                var timeSpan = document.createElement('span');
+                timeSpan.className = 'msg-time';
+                timeSpan.textContent = formatTime(msg.timestamp);
+                topRow.appendChild(timeSpan);
+
+                card.appendChild(topRow);
+
+                // Sender row
+                var senderDiv = document.createElement('div');
+                senderDiv.className = 'msg-sender';
+
+                if (isSecurity) {
+                    var shieldSpan = document.createElement('span');
+                    shieldSpan.className = 'security-shield';
+                    shieldSpan.textContent = 'S';
+                    senderDiv.appendChild(shieldSpan);
+                }
+
+                var nameText = document.createTextNode(msg.senderName || 'Unknown');
+                senderDiv.appendChild(nameText);
+
+                if (severity != null) {
+                    var sevBadge = document.createElement('span');
+                    var sevCls = severity >= 8 ? 'severity-crit' : severity >= 6 ? 'severity-high' : severity >= 4 ? 'severity-med' : 'severity-low';
+                    sevBadge.className = 'severity-badge ' + sevCls;
+                    sevBadge.textContent = severity;
+                    senderDiv.appendChild(sevBadge);
+                }
+
+                card.appendChild(senderDiv);
+
+                // Body
+                var bodyDiv = document.createElement('div');
+                bodyDiv.className = 'msg-body';
+                var bodyText = '';
+                if (data.emergencyType) bodyText = formatType(data.emergencyType);
+                else if (data.description) bodyText = data.description;
+                else if (data.category) bodyText = data.category;
+                else if (data.message) bodyText = data.message;
+                else if (data.broadcastMessage) bodyText = data.broadcastMessage;
+                else if (data.missingPersonName) bodyText = 'Missing: ' + data.missingPersonName;
+                else if (data.shelterName) bodyText = data.shelterName;
+                else if (data.estimatedArrival) bodyText = 'ETA: ' + data.estimatedArrival;
+                else bodyText = formatType(msg.type);
+                bodyDiv.textContent = bodyText;
+                card.appendChild(bodyDiv);
+
+                // Audio transcript (if present)
+                if (data.audioTranscript) {
+                    var transcriptDiv = document.createElement('div');
+                    transcriptDiv.style.cssText = 'margin-top:8px;padding:8px 10px;background:rgba(59,130,246,0.12);border-radius:8px;border-left:3px solid #3b82f6;font-size:12px;color:#93c5fd;line-height:1.4;';
+                    var transcriptLabel = document.createElement('div');
+                    transcriptLabel.style.cssText = 'font-size:10px;font-weight:700;color:#60a5fa;margin-bottom:4px;text-transform:uppercase;';
+                    transcriptLabel.textContent = 'AUDIO TRANSCRIPT';
+                    transcriptDiv.appendChild(transcriptLabel);
+                    var transcriptText = document.createElement('div');
+                    transcriptText.textContent = data.audioTranscript;
+                    transcriptDiv.appendChild(transcriptText);
+                    card.appendChild(transcriptDiv);
+
+                    // AI Analysis section
+                    if (msg.aiAnalysis) {
+                        var ai = msg.aiAnalysis;
+                        var threatColors = { low: '#22c55e', medium: '#eab308', high: '#f97316', critical: '#ef4444' };
+                        var threatColor = threatColors[ai.threatLevel] || '#6b7280';
+
+                        var aiDiv = document.createElement('div');
+                        aiDiv.style.cssText = 'margin-top:6px;padding:8px 10px;background:rgba(168,85,247,0.12);border-radius:8px;border-left:3px solid #a855f7;font-size:12px;color:#c4b5fd;line-height:1.5;';
+
+                        var aiLabel = document.createElement('div');
+                        aiLabel.style.cssText = 'font-size:10px;font-weight:700;color:#a855f7;margin-bottom:6px;text-transform:uppercase;display:flex;align-items:center;gap:6px;';
+                        var aiIcon = document.createElement('span');
+                        aiIcon.style.cssText = 'font-size:12px;';
+                        aiIcon.textContent = '';
+                        aiLabel.appendChild(aiIcon);
+                        var aiLabelText = document.createTextNode('AI Dispatch Analysis');
+                        aiLabel.appendChild(aiLabelText);
+                        aiDiv.appendChild(aiLabel);
+
+                        // Threat level badge
+                        var threatBadge = document.createElement('div');
+                        threatBadge.style.cssText = 'display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;color:#fff;background:' + threatColor + ';';
+                        threatBadge.textContent = 'THREAT: ' + (ai.threatLevel || 'unknown').toUpperCase();
+                        aiDiv.appendChild(threatBadge);
+
+                        // Summary
+                        var summaryDiv = document.createElement('div');
+                        summaryDiv.style.cssText = 'margin-bottom:6px;color:#ddd6fe;';
+                        summaryDiv.textContent = ai.summary || '';
+                        aiDiv.appendChild(summaryDiv);
+
+                        // Recommended response
+                        if (ai.recommendedResponse) {
+                            var recDiv = document.createElement('div');
+                            recDiv.style.cssText = 'padding:4px 8px;background:rgba(168,85,247,0.15);border-radius:4px;font-size:11px;color:#c4b5fd;';
+                            var recLabel = document.createElement('strong');
+                            recLabel.style.cssText = 'color:#a855f7;';
+                            recLabel.textContent = 'Response: ';
+                            recDiv.appendChild(recLabel);
+                            var recText = document.createTextNode(ai.recommendedResponse);
+                            recDiv.appendChild(recText);
+                            aiDiv.appendChild(recDiv);
+                        }
+
+                        card.appendChild(aiDiv);
+                    } else {
+                        // Show loading state — analysis may still be processing
+                        var aiLoading = document.createElement('div');
+                        aiLoading.style.cssText = 'margin-top:6px;padding:6px 10px;background:rgba(168,85,247,0.08);border-radius:8px;font-size:11px;color:#a855f7;opacity:0.7;';
+                        aiLoading.textContent = 'AI analysis processing...';
+                        card.appendChild(aiLoading);
+                    }
+                }
+
+                frag.appendChild(card);
+            });
+
+            while (container.firstChild) container.removeChild(container.firstChild);
+            container.appendChild(frag);
+
+            lastMessageIds = currentIds;
+        }
+
+        function flyToMessage(lat, lng) {
+            if (lat && lng) {
+                map.flyTo([lat, lng], 16, { duration: 0.8 });
+            }
+        }
+
+        // ==================== UPDATE LEFT PANEL ====================
+        function updateLeftPanel(security, panics) {
+            var container = document.getElementById('leftPanelContent');
+            var badge = document.getElementById('securityCountBadge');
+            var totalCount = security.length + panics.length;
+            badge.textContent = totalCount;
+
+            if (security.length === 0 && panics.length === 0) {
+                while (container.firstChild) container.removeChild(container.firstChild);
+                var emptyDiv = document.createElement('div');
+                emptyDiv.className = 'empty-state';
+                var iconDiv = document.createElement('div');
+                iconDiv.className = 'empty-state-icon';
+                iconDiv.textContent = '--';
+                var textDiv = document.createElement('div');
+                textDiv.className = 'empty-state-text';
+                textDiv.textContent = 'No active personnel';
+                var subDiv = document.createElement('div');
+                subDiv.className = 'empty-state-sub';
+                subDiv.textContent = 'Security data will appear here';
+                emptyDiv.appendChild(iconDiv);
+                emptyDiv.appendChild(textDiv);
+                emptyDiv.appendChild(subDiv);
+                container.appendChild(emptyDiv);
+                return;
+            }
+
+            var frag = document.createDocumentFragment();
+
+            // Security personnel section
+            if (security.length > 0) {
+                var secLabel = document.createElement('div');
+                secLabel.className = 'section-label';
+                secLabel.textContent = 'Security Personnel (' + security.length + ')';
+                frag.appendChild(secLabel);
+
+                security.forEach(function(guard) {
+                    var status = guard.dutyStatus || 'off_duty';
+                    var avatarClass = status === 'responding' ? 'responding' : status === 'on_duty' ? 'on-duty' : 'off-duty';
+                    var statusClass = status === 'responding' ? 'responding' : status === 'on_duty' ? 'on-duty' : 'off-duty';
+
+                    var card = document.createElement('div');
+                    card.className = 'guard-card';
+                    var gLat = guard.latitude || 0;
+                    var gLng = guard.longitude || 0;
+                    card.addEventListener('click', (function(lat, lng) {
+                        return function() { flyToGuard(lat, lng); };
+                    })(gLat, gLng));
+
+                    var avatar = document.createElement('div');
+                    avatar.className = 'guard-avatar ' + avatarClass;
+                    avatar.textContent = 'S';
+                    card.appendChild(avatar);
+
+                    var info = document.createElement('div');
+                    info.className = 'guard-info';
+
+                    var nameDiv = document.createElement('div');
+                    nameDiv.className = 'guard-name';
+                    nameDiv.textContent = guard.name || 'Unknown';
+                    info.appendChild(nameDiv);
+
+                    var statusDiv = document.createElement('div');
+                    statusDiv.className = 'guard-status ' + statusClass;
+                    var statusText = status.replace('_', ' ');
+                    if (guard.respondingTo) {
+                        statusText += ' \u2022 Panic ' + guard.respondingTo.substring(0, 6);
+                    }
+                    statusDiv.textContent = statusText;
+                    info.appendChild(statusDiv);
+
+                    card.appendChild(info);
+                    frag.appendChild(card);
+                });
+            }
+
+            // Active panics section
+            if (panics.length > 0) {
+                if (security.length > 0) {
+                    var divider = document.createElement('div');
+                    divider.className = 'divider';
+                    frag.appendChild(divider);
+                }
+
+                var panicLabel = document.createElement('div');
+                panicLabel.className = 'section-label';
+                panicLabel.textContent = 'Active Panics (' + panics.length + ')';
+                frag.appendChild(panicLabel);
+
+                // Sort panics by most recent first
+                panics.sort(function(a, b) {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                });
+
+                panics.forEach(function(panic) {
+                    var card = document.createElement('div');
+                    var isViewed = viewedPanicIds.has(panic.id);
+                    card.className = 'panic-card' + (isViewed ? ' viewed' : '');
+                    card.addEventListener('click', (function(id) {
+                        return function() { openIncidentDetail(id); };
+                    })(panic.id));
+
+                    var topDiv = document.createElement('div');
+                    topDiv.className = 'panic-card-top';
+
+                    var typeSpan = document.createElement('span');
+                    typeSpan.className = 'panic-type';
+                    typeSpan.textContent = formatType(panic.emergencyType) || 'Emergency';
+                    topDiv.appendChild(typeSpan);
+
+                    var sevSpan = document.createElement('span');
+                    sevSpan.className = 'panic-severity';
+                    sevSpan.textContent = 'SEV ' + (panic.severity || '?');
+                    topDiv.appendChild(sevSpan);
+
+                    card.appendChild(topDiv);
+
+                    var descDiv = document.createElement('div');
+                    descDiv.style.cssText = 'font-size:12px;opacity:0.7;margin-bottom:6px;';
+                    var descText = panic.senderName || 'Unknown';
+                    if (panic.description) descText += ' \u2014 ' + panic.description;
+                    descDiv.textContent = descText;
+                    card.appendChild(descDiv);
+
+                    var metaDiv = document.createElement('div');
+                    metaDiv.className = 'panic-meta';
+
+                    var wSpan = document.createElement('span');
+                    wSpan.textContent = (panic.witnesses || 0) + ' witnesses';
+                    metaDiv.appendChild(wSpan);
+
+                    var rSpan = document.createElement('span');
+                    rSpan.textContent = (panic.responderCount || 0) + ' responders';
+                    metaDiv.appendChild(rSpan);
+
+                    var tSpan = document.createElement('span');
+                    tSpan.textContent = formatTime(panic.timestamp);
+                    metaDiv.appendChild(tSpan);
+
+                    card.appendChild(metaDiv);
+                    frag.appendChild(card);
+                });
+            }
+
+            while (container.firstChild) container.removeChild(container.firstChild);
+            container.appendChild(frag);
+        }
+
+        function flyToGuard(lat, lng) {
+            if (lat && lng) {
+                map.flyTo([lat, lng], 17, { duration: 0.8 });
+            }
+        }
+
+        // ==================== INCIDENT DETAIL VIEW ====================
+        var activeIncidentId = null;
+        var viewedPanicIds = new Set();  // Track which panics have been opened
+        var incidentRadiusCircle = null;
+        var incidentRefreshInterval = null;
+
+        function openIncidentDetail(panicId) {
+            activeIncidentId = panicId;
+            viewedPanicIds.add(panicId);  // Mark as viewed
+            // Clear any existing refresh interval
+            if (incidentRefreshInterval) clearInterval(incidentRefreshInterval);
+
+            fetchIncidentDetail(panicId, true);
+
+            // Auto-refresh incident detail every 3 seconds to pick up new transcripts/analysis
+            incidentRefreshInterval = setInterval(function() {
+                if (activeIncidentId === panicId) {
+                    fetchIncidentDetail(panicId, false);
+                } else {
+                    clearInterval(incidentRefreshInterval);
+                }
+            }, 3000);
+        }
+
+        function fetchIncidentDetail(panicId, isFirstLoad) {
+            fetch('/api/incident/' + panicId)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    renderIncidentDetail(data);
+                    if (isFirstLoad) {
+                        // Fly to incident and show 500m radius
+                        if (data.panic.latitude && data.panic.longitude) {
+                            map.flyTo([data.panic.latitude, data.panic.longitude], 15, { duration: 1 });
+                            if (incidentRadiusCircle) map.removeLayer(incidentRadiusCircle);
+                            incidentRadiusCircle = L.circle([data.panic.latitude, data.panic.longitude], {
+                                radius: 500, color: '#22c55e', weight: 2, opacity: 0.6,
+                                fillColor: '#22c55e', fillOpacity: 0.06, dashArray: '10, 8'
+                            }).addTo(map);
+                        }
+                        // Auto-activate nearby cameras and open camera panel
+                        data.nearbyCameras.forEach(function(cam) {
+                            if (!cam.isActivated) {
+                                fetch('/api/cameras/' + cam.id + '/activate', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ panicId: panicId, reason: 'Incident within ' + cam.distance + 'm' })
+                                });
+                            }
+                        });
+                        if (data.nearbyCameras.length > 0 && !cameraPanelOpen) {
+                            toggleCameraPanel();
+                            fetchCameras();
+                        }
+                    }
+                })
+                .catch(function(e) { console.error('Failed to load incident:', e); });
+        }
+
+        function closeIncidentDetail() {
+            activeIncidentId = null;
+            if (incidentRefreshInterval) { clearInterval(incidentRefreshInterval); incidentRefreshInterval = null; }
+            if (incidentRadiusCircle) {
+                map.removeLayer(incidentRadiusCircle);
+                incidentRadiusCircle = null;
+            }
+            // Restore normal right panel
+            var panel = document.getElementById('rightPanel');
+            var header = panel.querySelector('.panel-header .panel-title');
+            header.childNodes[0].textContent = 'Live Feed ';
+            var content = document.getElementById('feedContent');
+            content.className = 'panel-content';
+            content.id = 'feedContent';
+            // Force refresh
+            fetchData();
+        }
+
+        function renderIncidentDetail(data) {
+            var panel = document.getElementById('rightPanel');
+            // Ensure panel is open
+            if (panel.classList.contains('collapsed')) toggleRightPanel();
+
+            var header = panel.querySelector('.panel-header .panel-title');
+            header.childNodes[0].textContent = 'Incident Detail ';
+
+            var content = document.getElementById('feedContent');
+            while (content.firstChild) content.removeChild(content.firstChild);
+
+            var wrap = document.createElement('div');
+            wrap.className = 'incident-detail';
+
+            // Back button
+            var back = document.createElement('button');
+            back.className = 'incident-back';
+            back.textContent = '\u2190 Back to Feed';
+            back.onclick = closeIncidentDetail;
+            wrap.appendChild(back);
+
+            // Header card
+            var p = data.panic;
+            var hdr = document.createElement('div');
+            hdr.className = 'incident-header';
+
+            var hdrTop = document.createElement('div');
+            hdrTop.className = 'incident-header-top';
+            var typeEl = document.createElement('div');
+            typeEl.className = 'incident-type';
+            typeEl.textContent = formatType(p.emergencyType || 'emergency');
+            hdrTop.appendChild(typeEl);
+            var sevEl = document.createElement('div');
+            sevEl.className = 'incident-sev';
+            sevEl.textContent = 'SEV ' + (p.severity || '?');
+            hdrTop.appendChild(sevEl);
+            hdr.appendChild(hdrTop);
+
+            var senderEl = document.createElement('div');
+            senderEl.className = 'incident-sender';
+            senderEl.textContent = p.senderName || 'Unknown';
+            hdr.appendChild(senderEl);
+
+            if (p.description) {
+                var descEl = document.createElement('div');
+                descEl.className = 'incident-desc';
+                descEl.textContent = p.description;
+                hdr.appendChild(descEl);
+            }
+
+            var timeEl = document.createElement('div');
+            timeEl.className = 'incident-time';
+            timeEl.textContent = formatTime(p.timestamp) + ' \u2022 ' + (p.witnesses || 0) + ' witnesses \u2022 ' + (p.responderCount || 0) + ' responders';
+            hdr.appendChild(timeEl);
+
+            wrap.appendChild(hdr);
+
+            // Transcript section — show waiting indicator if recording in progress
+            if (!data.transcript && p.description && p.description.indexOf('audio recording') !== -1) {
+                var waitSec = document.createElement('div');
+                waitSec.className = 'incident-section';
+                var waitLabel = document.createElement('div');
+                waitLabel.className = 'incident-section-label';
+                waitLabel.textContent = 'Audio Transcript';
+                waitSec.appendChild(waitLabel);
+                var waitBox = document.createElement('div');
+                waitBox.className = 'incident-transcript';
+                waitBox.style.opacity = '0.7';
+
+                var elapsed = Math.round((Date.now() - new Date(p.timestamp).getTime()) / 1000);
+                var waitDot = document.createElement('div');
+                waitDot.style.cssText = 'display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:8px;animation:pulse 1.5s infinite;';
+                waitBox.appendChild(waitDot);
+
+                var statusText = '';
+                if (elapsed < 8) {
+                    statusText = 'Recording audio...';
+                } else if (elapsed < 20) {
+                    statusText = 'Transcribing with Whisper...';
+                } else {
+                    statusText = 'Syncing transcript...';
+                }
+                waitBox.appendChild(document.createTextNode(statusText));
+                waitSec.appendChild(waitBox);
+                wrap.appendChild(waitSec);
+            }
+
+            if (data.transcript) {
+                var tSec = document.createElement('div');
+                tSec.className = 'incident-section';
+                var tLabel = document.createElement('div');
+                tLabel.className = 'incident-section-label';
+                tLabel.textContent = 'Audio Transcript';
+                tSec.appendChild(tLabel);
+
+                var tBox = document.createElement('div');
+                tBox.className = 'incident-transcript';
+                var tBoxLabel = document.createElement('div');
+                tBoxLabel.className = 'incident-transcript-label';
+                tBoxLabel.textContent = 'CAPTURED AUDIO';
+                tBox.appendChild(tBoxLabel);
+                var tText = document.createElement('div');
+                tText.textContent = data.transcript;
+                tBox.appendChild(tText);
+                tSec.appendChild(tBox);
+                wrap.appendChild(tSec);
+            }
+
+            // AI Analysis section
+            if (data.aiAnalysis) {
+                var ai = data.aiAnalysis;
+                var aSec = document.createElement('div');
+                aSec.className = 'incident-section';
+                var aLabel = document.createElement('div');
+                aLabel.className = 'incident-section-label';
+                aLabel.textContent = 'AI Dispatch Analysis';
+                aSec.appendChild(aLabel);
+
+                var aBox = document.createElement('div');
+                aBox.className = 'incident-ai';
+                var aBoxLabel = document.createElement('div');
+                aBoxLabel.className = 'incident-ai-label';
+                aBoxLabel.textContent = 'AI INTELLIGENCE';
+                aBox.appendChild(aBoxLabel);
+
+                var threatColors = { low: '#22c55e', medium: '#eab308', high: '#f97316', critical: '#ef4444' };
+                var threat = document.createElement('div');
+                threat.className = 'incident-ai-threat';
+                threat.style.background = threatColors[ai.threatLevel] || '#6b7280';
+                threat.textContent = 'THREAT: ' + (ai.threatLevel || 'unknown').toUpperCase();
+                aBox.appendChild(threat);
+
+                if (ai.summary) {
+                    var sum = document.createElement('div');
+                    sum.className = 'incident-ai-summary';
+                    sum.textContent = ai.summary;
+                    aBox.appendChild(sum);
+                }
+
+                if (ai.actionItems && ai.actionItems.length > 0) {
+                    var items = document.createElement('ul');
+                    items.className = 'incident-ai-items';
+                    ai.actionItems.forEach(function(item) {
+                        var li = document.createElement('li');
+                        li.textContent = item;
+                        items.appendChild(li);
+                    });
+                    aBox.appendChild(items);
+                }
+
+                if (ai.recommendedResponse) {
+                    var resp = document.createElement('div');
+                    resp.className = 'incident-ai-response';
+                    var respLabel = document.createElement('strong');
+                    respLabel.style.color = '#a855f7';
+                    respLabel.textContent = 'Recommended: ';
+                    resp.appendChild(respLabel);
+                    resp.appendChild(document.createTextNode(ai.recommendedResponse));
+                    aBox.appendChild(resp);
+                }
+
+                if (ai.detectedThreats && ai.detectedThreats.length > 0) {
+                    var threats = document.createElement('div');
+                    threats.style.cssText = 'margin-top:8px;font-size:11px;color:#c4b5fd;';
+                    threats.textContent = 'Detected: ' + ai.detectedThreats.join(', ');
+                    aBox.appendChild(threats);
+                }
+
+                aSec.appendChild(aBox);
+                wrap.appendChild(aSec);
+            }
+
+            // Nearby Cameras section
+            if (data.nearbyCameras && data.nearbyCameras.length > 0) {
+                var cSec = document.createElement('div');
+                cSec.className = 'incident-section';
+                var cLabel = document.createElement('div');
+                cLabel.className = 'incident-section-label';
+                cLabel.textContent = 'Cameras within 500m (' + data.nearbyCameras.length + ')';
+                cSec.appendChild(cLabel);
+
+                data.nearbyCameras.forEach(function(cam) {
+                    var camCard = document.createElement('div');
+                    camCard.className = 'incident-cam-card';
+                    camCard.onclick = function() {
+                        // Open camera panel and focus on this camera
+                        if (!cameraPanelOpen) toggleCameraPanel();
+                        connectCameraViewer(cam.id);
+                    };
+
+                    var icon = document.createElement('div');
+                    icon.className = 'incident-cam-icon';
+                    icon.textContent = 'CAM';
+                    camCard.appendChild(icon);
+
+                    var camInfo = document.createElement('div');
+                    camInfo.style.flex = '1';
+                    var camName = document.createElement('div');
+                    camName.className = 'incident-cam-name';
+                    camName.textContent = cam.name;
+                    camInfo.appendChild(camName);
+                    var camDist = document.createElement('div');
+                    camDist.className = 'incident-cam-dist';
+                    camDist.textContent = cam.type + ' \u2022 ' + cam.distance + 'm away' + (cam.isActivated ? ' \u2022 Active' : '');
+                    camInfo.appendChild(camDist);
+                    camCard.appendChild(camInfo);
+
+                    var camStatus = document.createElement('div');
+                    camStatus.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + (cam.isActivated ? '#ef4444' : '#525252') + ';';
+                    camCard.appendChild(camStatus);
+
+                    cSec.appendChild(camCard);
+                });
+
+                wrap.appendChild(cSec);
+            }
+
+            // Timeline section
+            if (data.timeline && data.timeline.length > 0) {
+                var tlSec = document.createElement('div');
+                tlSec.className = 'incident-section';
+                var tlLabel = document.createElement('div');
+                tlLabel.className = 'incident-section-label';
+                tlLabel.textContent = 'Timeline (' + data.timeline.length + ' events)';
+                tlSec.appendChild(tlLabel);
+
+                var tl = document.createElement('ul');
+                tl.className = 'incident-timeline';
+                data.timeline.forEach(function(ev) {
+                    var li = document.createElement('li');
+                    li.className = ev.type || '';
+
+                    var evTime = document.createElement('div');
+                    evTime.className = 'incident-tl-time';
+                    evTime.textContent = formatTime(ev.timestamp);
+                    li.appendChild(evTime);
+
+                    var evSender = document.createElement('span');
+                    evSender.className = 'incident-tl-sender';
+                    evSender.textContent = ev.senderName || 'Unknown';
+                    li.appendChild(evSender);
+
+                    li.appendChild(document.createTextNode(' \u2014 ' + (ev.description || formatType(ev.type))));
+                    tl.appendChild(li);
+                });
+                tlSec.appendChild(tl);
+                wrap.appendChild(tlSec);
+            }
+
+            content.appendChild(wrap);
+        }
+
+        // ==================== STATUS BADGE ====================
+        function updateStatusBadge(stats, panics) {
+            var dot = document.getElementById('statusDot');
+            var text = document.getElementById('statusText');
+
+            if (panics && panics.length > 0) {
+                dot.className = 'status-dot alert';
+                text.textContent = panics.length + ' Active Panic' + (panics.length > 1 ? 's' : '');
+            } else if ((stats.connectedDevices || 0) > 0) {
+                dot.className = 'status-dot';
+                text.textContent = stats.connectedDevices + ' Device' + (stats.connectedDevices > 1 ? 's' : '') + ' Connected';
+            } else {
+                dot.className = 'status-dot';
+                text.textContent = 'Monitoring';
+            }
+        }
+
+        // ==================== FILTERING ====================
+        function toggleFilter(filterType) {
+            var items = document.querySelectorAll('.stat-item');
+
+            if (activeFilter === filterType || filterType === 'all') {
+                activeFilter = null;
+                items.forEach(function(i) { i.classList.remove('active'); });
+            } else {
+                activeFilter = filterType;
+                items.forEach(function(i) {
+                    if (i.dataset.filter === filterType) {
+                        i.classList.add('active');
+                    } else {
+                        i.classList.remove('active');
+                    }
+                });
+            }
+
+            applyFilter();
+        }
+
+        function applyFilter() {
+            if (!activeFilter) {
+                Object.keys(markerLayers).forEach(function(key) {
+                    if (!map.hasLayer(markerLayers[key])) {
+                        map.addLayer(markerLayers[key]);
+                    }
+                });
+                return;
+            }
+
+            Object.keys(markerLayers).forEach(function(key) {
+                var layer = markerLayers[key];
+                if (key === 'lines' || key === 'zones') {
+                    if (!map.hasLayer(layer)) map.addLayer(layer);
+                } else if (key === activeFilter || (activeFilter === 'security' && (key === 'security-response' || key === 'security-status'))) {
+                    if (!map.hasLayer(layer)) map.addLayer(layer);
+                } else {
+                    if (map.hasLayer(layer)) map.removeLayer(layer);
+                }
+            });
+        }
+
+        // ==================== PANEL TOGGLES ====================
+        function toggleRightPanel() {
+            rightPanelOpen = !rightPanelOpen;
+            var panel = document.getElementById('rightPanel');
+            var toggle = document.getElementById('toggleRight');
+            if (rightPanelOpen) {
+                panel.classList.remove('collapsed');
+                toggle.classList.remove('shifted');
+            } else {
+                panel.classList.add('collapsed');
+                toggle.classList.add('shifted');
+            }
+            toggle.textContent = rightPanelOpen ? '\u25B6' : '\u25C0';
+        }
+
+        function toggleLeftPanel() {
+            leftPanelOpen = !leftPanelOpen;
+            var panel = document.getElementById('leftPanel');
+            var toggle = document.getElementById('toggleLeft');
+            if (leftPanelOpen) {
+                panel.classList.remove('collapsed');
+                toggle.classList.remove('shifted');
+            } else {
+                panel.classList.add('collapsed');
+                toggle.classList.add('shifted');
+            }
+            toggle.textContent = leftPanelOpen ? '\u25C0' : '\u25B6';
+        }
+
+        // ==================== CLEAR ALL ====================
+        function clearAll() {
+            fetch('/api/messages', { method: 'DELETE' }).then(function() {
+                lastMessageIds.clear();
+                Object.keys(markerLayers).forEach(function(key) {
+                    markerLayers[key].clearLayers();
+                });
+
+                // Reset feed
+                var feedContainer = document.getElementById('feedContent');
+                while (feedContainer.firstChild) feedContainer.removeChild(feedContainer.firstChild);
+                var emptyFeed = document.createElement('div');
+                emptyFeed.className = 'empty-state';
+                var fi = document.createElement('div');
+                fi.className = 'empty-state-icon';
+                fi.textContent = '--';
+                var ft = document.createElement('div');
+                ft.className = 'empty-state-text';
+                ft.textContent = 'Awaiting transmissions';
+                var fs = document.createElement('div');
+                fs.className = 'empty-state-sub';
+                fs.textContent = 'Messages will stream here in real-time';
+                emptyFeed.appendChild(fi);
+                emptyFeed.appendChild(ft);
+                emptyFeed.appendChild(fs);
+                feedContainer.appendChild(emptyFeed);
+
+                // Reset left panel
+                var leftContainer = document.getElementById('leftPanelContent');
+                while (leftContainer.firstChild) leftContainer.removeChild(leftContainer.firstChild);
+                var emptyLeft = document.createElement('div');
+                emptyLeft.className = 'empty-state';
+                var li = document.createElement('div');
+                li.className = 'empty-state-icon';
+                li.textContent = '--';
+                var lt = document.createElement('div');
+                lt.className = 'empty-state-text';
+                lt.textContent = 'No active personnel';
+                var ls = document.createElement('div');
+                ls.className = 'empty-state-sub';
+                ls.textContent = 'Security data will appear here';
+                emptyLeft.appendChild(li);
+                emptyLeft.appendChild(lt);
+                emptyLeft.appendChild(ls);
+                leftContainer.appendChild(emptyLeft);
+
+                // Reset stats
+                ['statPanic','statIncident','statSecurity','statWitness','statDevices'].forEach(function(id) {
+                    document.getElementById(id).textContent = '0';
+                });
+                document.getElementById('feedCountBadge').textContent = '0';
+                document.getElementById('securityCountBadge').textContent = '0';
+                activeFilter = null;
+                document.querySelectorAll('.stat-item').forEach(function(i) { i.classList.remove('active'); });
+                simPhase = 0;
+                simPanicIds = [];
+            }).catch(function(e) {
+                console.error('Clear failed:', e);
+            });
+        }
+
+        // ==================== SIMULATION ====================
+        function toggleSimulation() {
+            simulating = !simulating;
+            var btn = document.getElementById('simulateBtn');
+            var text = document.getElementById('simulateBtnText');
+
+            if (simulating) {
+                // Clear only previous simulation data, preserve real alerts
+                fetch('/api/messages/simulation', { method: 'DELETE' }).then(function() {
+                    fetchData();
+                    fetchCameras();
+                });
+                btn.classList.add('active');
+                text.textContent = 'Stop';
+                simPhase = 0;
+                simPanicIds = [];
+                runSimStep();
+                simInterval = setInterval(runSimStep, 2200);
+            } else {
+                // Clear only simulation data, preserve real alerts
+                fetch('/api/messages/simulation', { method: 'DELETE' }).then(function() {
+                    fetchData();
+                    fetchCameras();
+                });
+                btn.classList.remove('active');
+                text.textContent = 'Simulate';
+                clearInterval(simInterval);
+                simInterval = null;
+            }
+        }
+
+        function uuid() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+        }
+
+        function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function jitter(val, range) { return val + (Math.random() - 0.5) * range; }
+
+        function runSimStep() {
+            if (!simulating) return;
+
+            var loc = randomFrom(PHILLY_LOCATIONS);
+            var messages = [];
+            var deviceId = uuid();
+            var deviceName, deviceRole, dutyStatus;
+
+            simPhase++;
+
+            if (simPhase <= 2) {
+                // Security come on duty
+                var guardName = GUARD_NAMES[(simPhase - 1) % GUARD_NAMES.length];
+                deviceName = guardName;
+                deviceRole = 'security';
+                dutyStatus = 'on_duty';
+                messages.push({
+                    id: uuid(),
+                    type: 'security-status',
+                    senderId: deviceId,
+                    senderName: guardName,
+                    senderRole: 'security',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        isOnDuty: true,
+                        latitude: jitter(loc.lat, 0.004),
+                        longitude: jitter(loc.lng, 0.004),
+                        skills: ['first_aid', 'de_escalation']
+                    }
+                });
+            } else if (simPhase === 3 || simPhase === 7 || simPhase === 12) {
+                // Panic event
+                var civilian = randomFrom(CIVILIAN_NAMES);
+                var panicId = uuid();
+                simPanicIds.push(panicId);
+                var emergencyType = randomFrom(EMERGENCY_TYPES);
+                var severity = Math.floor(Math.random() * 5) + 5;
+                deviceName = civilian;
+                deviceRole = 'civilian';
+                dutyStatus = 'off_duty';
+                messages.push({
+                    id: uuid(),
+                    type: 'panic',
+                    senderId: deviceId,
+                    senderName: civilian,
+                    senderRole: 'civilian',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        panicId: panicId,
+                        emergencyType: emergencyType,
+                        severityScore: severity,
+                        latitude: jitter(loc.lat, 0.002),
+                        longitude: jitter(loc.lng, 0.002),
+                        description: formatType(emergencyType) + ' reported near ' + loc.name,
+                        witnessCount: 0
+                    }
+                });
+            } else if (simPhase === 4 || simPhase === 8) {
+                // Witness confirmation
+                var civilian = randomFrom(CIVILIAN_NAMES);
+                var targetPanic = simPanicIds.length > 0 ? simPanicIds[simPanicIds.length - 1] : uuid();
+                deviceName = civilian;
+                deviceRole = 'civilian';
+                dutyStatus = 'off_duty';
+                messages.push({
+                    id: uuid(),
+                    type: 'witness-confirm',
+                    senderId: deviceId,
+                    senderName: civilian,
+                    senderRole: 'civilian',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        confirmedPanicId: targetPanic,
+                        latitude: jitter(loc.lat, 0.003),
+                        longitude: jitter(loc.lng, 0.003),
+                        description: 'Can confirm, I saw it happen'
+                    }
+                });
+            } else if (simPhase === 5 || simPhase === 9) {
+                // Security response
+                var guardName = randomFrom(GUARD_NAMES);
+                var targetPanic = simPanicIds.length > 0 ? simPanicIds[simPanicIds.length - 1] : uuid();
+                deviceName = guardName;
+                deviceRole = 'security';
+                dutyStatus = 'responding';
+                messages.push({
+                    id: uuid(),
+                    type: 'security-response',
+                    senderId: deviceId,
+                    senderName: guardName,
+                    senderRole: 'security',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        respondingToPanicId: targetPanic,
+                        latitude: jitter(loc.lat, 0.005),
+                        longitude: jitter(loc.lng, 0.005),
+                        estimatedArrival: (Math.floor(Math.random() * 5) + 2) + ' minutes'
+                    }
+                });
+            } else if (simPhase === 6) {
+                // Incident report
+                var civilian = randomFrom(CIVILIAN_NAMES);
+                deviceName = civilian;
+                deviceRole = 'civilian';
+                dutyStatus = 'off_duty';
+                messages.push({
+                    id: uuid(),
+                    type: 'incident-report',
+                    senderId: deviceId,
+                    senderName: civilian,
+                    senderRole: 'civilian',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        category: randomFrom(['theft', 'vandalism', 'suspicious_person', 'noise_disturbance']),
+                        description: 'Incident reported at ' + loc.name,
+                        latitude: jitter(loc.lat, 0.003),
+                        longitude: jitter(loc.lng, 0.003),
+                        severityScore: Math.floor(Math.random() * 4) + 2
+                    }
+                });
+            } else if (simPhase === 10) {
+                // SOS
+                var civilian = randomFrom(CIVILIAN_NAMES);
+                deviceName = civilian;
+                deviceRole = 'civilian';
+                dutyStatus = 'off_duty';
+                messages.push({
+                    id: uuid(),
+                    type: 'sos',
+                    senderId: deviceId,
+                    senderName: civilian,
+                    senderRole: 'civilian',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        message: 'Need immediate help',
+                        latitude: jitter(loc.lat, 0.003),
+                        longitude: jitter(loc.lng, 0.003),
+                        batteryLevel: Math.floor(Math.random() * 30) + 5
+                    }
+                });
+            } else if (simPhase === 11) {
+                // Triage report
+                var guardName = randomFrom(GUARD_NAMES);
+                deviceName = guardName;
+                deviceRole = 'security';
+                dutyStatus = 'on_duty';
+                messages.push({
+                    id: uuid(),
+                    type: 'triage',
+                    senderId: deviceId,
+                    senderName: guardName,
+                    senderRole: 'security',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        category: 'medical',
+                        injuryCount: Math.floor(Math.random() * 3) + 1,
+                        description: 'Medical triage at ' + loc.name,
+                        latitude: jitter(loc.lat, 0.002),
+                        longitude: jitter(loc.lng, 0.002),
+                        severityScore: Math.floor(Math.random() * 4) + 4
+                    }
+                });
+            } else if (simPhase === 13) {
+                // Shelter update
+                var guardName = randomFrom(GUARD_NAMES);
+                deviceName = guardName;
+                deviceRole = 'security';
+                dutyStatus = 'on_duty';
+                messages.push({
+                    id: uuid(),
+                    type: 'shelter',
+                    senderId: deviceId,
+                    senderName: guardName,
+                    senderRole: 'security',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        shelterName: loc.name + ' Safe Zone',
+                        capacity: Math.floor(Math.random() * 50) + 20,
+                        isOpen: true,
+                        latitude: jitter(loc.lat, 0.001),
+                        longitude: jitter(loc.lng, 0.001)
+                    }
+                });
+            } else if (simPhase === 14) {
+                // Missing person
+                var civilian = randomFrom(CIVILIAN_NAMES);
+                deviceName = civilian;
+                deviceRole = 'civilian';
+                dutyStatus = 'off_duty';
+                messages.push({
+                    id: uuid(),
+                    type: 'missing-person',
+                    senderId: deviceId,
+                    senderName: civilian,
+                    senderRole: 'civilian',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        missingPersonName: randomFrom(['Emily W.', 'David C.', 'Sarah L.', 'James H.']),
+                        lastSeenLocation: loc.name,
+                        description: 'Last seen 30 minutes ago',
+                        latitude: jitter(loc.lat, 0.002),
+                        longitude: jitter(loc.lng, 0.002)
+                    }
+                });
+            } else if (simPhase === 15) {
+                // Broadcast
+                var guardName = randomFrom(GUARD_NAMES);
+                deviceName = guardName;
+                deviceRole = 'security';
+                dutyStatus = 'on_duty';
+                messages.push({
+                    id: uuid(),
+                    type: 'broadcast',
+                    senderId: deviceId,
+                    senderName: guardName,
+                    senderRole: 'security',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        broadcastMessage: 'All clear near ' + loc.name + '. Resume normal activity.',
+                        latitude: jitter(loc.lat, 0.002),
+                        longitude: jitter(loc.lng, 0.002),
+                        priority: 'normal'
+                    }
+                });
+            } else {
+                // Cycle back
+                simPhase = 2;
+                return;
+            }
+
+            if (messages.length > 0) {
+                // Tag every simulation message so it can be filtered from real alerts
+                messages.forEach(function(m) { m.simulated = true; });
+                fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        deviceId: deviceId,
+                        deviceName: deviceName || 'Sim Device',
+                        deviceRole: deviceRole || 'civilian',
+                        dutyStatus: dutyStatus || 'off_duty',
+                        timestamp: new Date().toISOString(),
+                        messages: messages
+                    })
+                }).catch(function(e) {
+                    console.error('Simulation post failed:', e);
+                });
+            }
+        }
+
+        // ==================== CAMERA SYSTEM ====================
+
+        var cameraPanelOpen = false;
+        var cameraData = [];
+
+        function toggleCameraPanel() {
+            cameraPanelOpen = !cameraPanelOpen;
+            var panel = document.getElementById('cameraPanel');
+            if (cameraPanelOpen) {
+                panel.classList.add('active');
+            } else {
+                panel.classList.remove('active');
+            }
+        }
+
+        function fetchCameras() {
+            fetch('/api/cameras')
+                .then(function(r) { return r.json(); })
+                .then(function(cameras) {
+                    cameraData = cameras;
+                    renderCameras(cameras);
+                })
+                .catch(function() {});
+        }
+
+        var renderedCameraState = ''; // Track last rendered state to avoid re-rendering
+
+        function renderCameras(cameras) {
+            var grid = document.getElementById('cameraGrid');
+            var activatedCount = cameras.filter(function(c) { return c.isActivated; }).length;
+
+            // Update count badge
+            var countEl = document.getElementById('camCount');
+            var liveOrActive = cameras.filter(function(c) { return c.isLive || c.isActivated; }).length;
+            countEl.textContent = liveOrActive;
+            countEl.style.display = liveOrActive > 0 ? 'inline-block' : 'none';
+
+            // Don't rebuild the DOM if camera state hasn't changed — this kills active WebRTC streams
+            var stateKey = cameras.map(function(c) { return c.id + ':' + c.isLive + ':' + c.isActivated; }).join(',');
+            if (stateKey === renderedCameraState) return;
+            renderedCameraState = stateKey;
+
+            // Update panel title
+            var titleEl = document.getElementById('cameraPanelTitle');
+            titleEl.textContent = 'Cameras — ' + activatedCount + ' activated';
+
+            // Auto-open panel when any camera is live or activated
+            var liveCount = cameras.filter(function(c) { return c.isLive; }).length;
+            if ((activatedCount > 0 || liveCount > 0) && !cameraPanelOpen) {
+                toggleCameraPanel();
+            }
+
+            // Build camera cards
+            var fragment = document.createDocumentFragment();
+
+            cameras.forEach(function(cam) {
+                var card = document.createElement('div');
+                card.className = 'camera-card' + (cam.isActivated ? ' activated' : '');
+
+                var feed = document.createElement('div');
+                feed.className = 'camera-feed';
+
+                if (cam.isLive) {
+                    // LIVE badge
+                    var badge = document.createElement('div');
+                    badge.className = 'live-badge';
+                    var dot = document.createElement('div');
+                    dot.className = 'rec-dot';
+                    badge.appendChild(dot);
+                    badge.appendChild(document.createTextNode(' LIVE'));
+                    feed.appendChild(badge);
+
+                    // WebRTC video element
+                    var vid = document.createElement('video');
+                    vid.id = 'camvid-' + cam.id;
+                    vid.autoplay = true;
+                    vid.playsinline = true;
+                    vid.muted = true;
+                    vid.style.width = '100%';
+                    vid.style.height = '100%';
+                    vid.style.objectFit = 'cover';
+                    feed.appendChild(vid);
+
+                    // Expand button
+                    var expandBtn = document.createElement('button');
+                    expandBtn.className = 'camera-expand-btn';
+                    expandBtn.setAttribute('data-lucide', 'maximize-2');
+                    expandBtn.addEventListener('click', (function(camId, camName) {
+                        return function(e) { e.stopPropagation(); expandCamera(camId, camName); };
+                    })(cam.id, cam.name));
+                    feed.appendChild(expandBtn);
+
+                    connectCameraViewer(cam.id);
+                } else if (cam.isActivated) {
+                    var waiting = document.createElement('div');
+                    waiting.className = 'no-feed';
+                    var wIcon = document.createElement('i');
+                    wIcon.setAttribute('data-lucide', 'video');
+                    wIcon.style.cssText = 'width:28px;height:28px;margin-bottom:8px;color:var(--gray-500);';
+                    waiting.appendChild(wIcon);
+                    waiting.appendChild(document.createElement('br'));
+                    waiting.appendChild(document.createTextNode('Waiting for camera...'));
+                    var wSub = document.createElement('span');
+                    wSub.style.cssText = 'font-size:10px;color:var(--gray-600);display:block;margin-top:4px;';
+                    wSub.textContent = 'Open /camera.html on phone';
+                    waiting.appendChild(wSub);
+                    feed.appendChild(waiting);
+                } else {
+                    var offFeed = document.createElement('div');
+                    offFeed.className = 'no-feed';
+                    var oIcon = document.createElement('i');
+                    oIcon.setAttribute('data-lucide', 'video-off');
+                    oIcon.style.cssText = 'width:28px;height:28px;margin-bottom:8px;color:var(--gray-600);';
+                    offFeed.appendChild(oIcon);
+                    offFeed.appendChild(document.createElement('br'));
+                    offFeed.appendChild(document.createTextNode('Camera offline'));
+                    feed.appendChild(offFeed);
+                }
+
+                card.appendChild(feed);
+
+                var info = document.createElement('div');
+                info.className = 'camera-info';
+
+                var name = document.createElement('div');
+                name.className = 'cam-name';
+                name.textContent = cam.name;
+                info.appendChild(name);
+
+                var status = document.createElement('div');
+                status.className = 'cam-status';
+                status.textContent = cam.type.charAt(0).toUpperCase() + cam.type.slice(1) + ' • ' + cam.status;
+                info.appendChild(status);
+
+                if (cam.activation && cam.activation.reason) {
+                    var reason = document.createElement('div');
+                    reason.className = 'cam-reason';
+                    reason.textContent = cam.activation.reason;
+                    info.appendChild(reason);
+                }
+
+                card.appendChild(info);
+                fragment.appendChild(card);
+            });
+
+            grid.innerHTML = '';
+            grid.appendChild(fragment);
+
+            // Re-attach existing WebRTC streams to newly created video elements
+            cameras.forEach(function(cam) {
+                if (cam.isLive && activeViewers[cam.id] && activeViewers[cam.id].pc) {
+                    var vid = document.getElementById('camvid-' + cam.id);
+                    if (vid) {
+                        var pc = activeViewers[cam.id].pc;
+                        var receivers = pc.getReceivers();
+                        var tracks = receivers.map(function(r) { return r.track; }).filter(Boolean);
+                        if (tracks.length > 0) {
+                            vid.srcObject = new MediaStream(tracks);
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== WEBRTC CAMERA VIEWER ====================
+
+        var activeViewers = {}; // camId -> { ws, pc }
+
+        function connectCameraViewer(camId) {
+            // Don't double-connect if we already have an active connection
+            if (activeViewers[camId] && activeViewers[camId].pc && activeViewers[camId].pc.connectionState !== 'closed') return;
+
+            var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            var ws = new WebSocket(proto + '//' + location.host);
+
+            ws.onopen = function() {
+                ws.send(JSON.stringify({ type: 'join', room: camId, role: 'viewer' }));
+                console.log('Viewer joined room: ' + camId);
+            };
+
+            ws.onmessage = function(evt) {
+                var msg = JSON.parse(evt.data);
+
+                if (msg.type === 'ready') {
+                    console.log('Room ready: ' + camId);
+                }
+
+                if (msg.type === 'offer') {
+                    var pc = new RTCPeerConnection({
+                        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                    });
+                    activeViewers[camId] = { ws: ws, pc: pc };
+
+                    pc.ontrack = function(e) {
+                        var vid = document.getElementById('camvid-' + camId);
+                        if (vid && e.streams[0]) {
+                            vid.srcObject = e.streams[0];
+                            console.log('Stream received for ' + camId);
+                        }
+                    };
+
+                    pc.onicecandidate = function(e) {
+                        if (e.candidate) {
+                            ws.send(JSON.stringify({ type: 'candidate', candidate: e.candidate }));
+                        }
+                    };
+
+                    pc.setRemoteDescription(new RTCSessionDescription(msg)).then(function() {
+                        return pc.createAnswer();
+                    }).then(function(answer) {
+                        return pc.setLocalDescription(answer);
+                    }).then(function() {
+                        ws.send(JSON.stringify(pc.localDescription));
+                    });
+                }
+
+                if (msg.type === 'candidate' && activeViewers[camId] && activeViewers[camId].pc) {
+                    activeViewers[camId].pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+                }
+            };
+
+            ws.onclose = function() {
+                delete activeViewers[camId];
+            };
+        }
+
+        // ==================== CAMERA FULLSCREEN ====================
+        function expandCamera(camId, camName) {
+            var srcVid = document.getElementById('camvid-' + camId);
+            if (!srcVid || !srcVid.srcObject) return;
+
+            var overlay = document.createElement('div');
+            overlay.className = 'camera-fullscreen-overlay';
+            overlay.onclick = function() { document.body.removeChild(overlay); };
+
+            var header = document.createElement('div');
+            header.className = 'fs-header';
+            var title = document.createElement('div');
+            title.className = 'fs-title';
+            title.textContent = camName + ' — LIVE';
+            header.appendChild(title);
+            var closeBtn = document.createElement('button');
+            closeBtn.className = 'fs-close';
+            closeBtn.textContent = '\u00D7';
+            closeBtn.onclick = function() { document.body.removeChild(overlay); };
+            header.appendChild(closeBtn);
+            overlay.appendChild(header);
+
+            var fullVid = document.createElement('video');
+            fullVid.autoplay = true;
+            fullVid.playsinline = true;
+            fullVid.muted = true;
+            fullVid.srcObject = srcVid.srcObject;
+            fullVid.onclick = function(e) { e.stopPropagation(); };
+            overlay.appendChild(fullVid);
+
+            document.body.appendChild(overlay);
+        }
+
+        // ==================== INIT ====================
+        initMap();
+        fetchData();
+        fetchCameras();
+        setInterval(fetchData, 3000);
+        setInterval(fetchCameras, 5000);
+
+        // Initialize Lucide icons after DOM is ready, and after every camera render
+        if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+        var _origRenderCameras = renderCameras;
+        renderCameras = function(cameras) {
+            _origRenderCameras(cameras);
+            if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+        };
+    </script>
+</body>
+</html>

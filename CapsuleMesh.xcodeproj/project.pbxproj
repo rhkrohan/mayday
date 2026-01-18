@@ -1,0 +1,521 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000021 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000022 /* Assets.xcassets */; };
+		A1000001 /* CapsuleMeshApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* CapsuleMeshApp.swift */; };
+		A1000002 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* Constants.swift */; };
+		A1000003 /* MessageType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* MessageType.swift */; };
+		A1000004 /* MeshMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004 /* MeshMessage.swift */; };
+		A1000005 /* Peer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005 /* Peer.swift */; };
+		A1000006 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006 /* DeviceIdentity.swift */; };
+		A1000007 /* MessageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007 /* MessageStore.swift */; };
+		A1000008 /* MeshNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008 /* MeshNetworkService.swift */; };
+		A1000009 /* MeshViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009 /* MeshViewModel.swift */; };
+		A1000010 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000010 /* MainTabView.swift */; };
+		A1000011 /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000011 /* MessagesView.swift */; };
+		A1000012 /* SOSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012 /* SOSView.swift */; };
+		A1000013 /* ActionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013 /* ActionsView.swift */; };
+		A1000014 /* TriageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000014 /* TriageView.swift */; };
+		A1000015 /* ShelterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015 /* ShelterView.swift */; };
+		A1000016 /* MissingPersonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016 /* MissingPersonView.swift */; };
+		A1000017 /* BroadcastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000017 /* BroadcastView.swift */; };
+		A1000018 /* DirectMessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000018 /* DirectMessageView.swift */; };
+		A1000019 /* PeersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000019 /* PeersView.swift */; };
+		A1000020 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000020 /* SettingsView.swift */; };
+		A1000023 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000023 /* Theme.swift */; };
+		A1000024 /* MeshVisualizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024 /* MeshVisualizationView.swift */; };
+		A1000025 /* NetworkMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025 /* NetworkMapView.swift */; };
+		A1000026 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000026 /* WelcomeView.swift */; };
+		A1000027 /* GatewayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000027 /* GatewayService.swift */; };
+		A1000028 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000028 /* LocationService.swift */; };
+		A1000029 /* SimulationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000029 /* SimulationService.swift */; };
+		A1000030 /* UserRole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000030 /* UserRole.swift */; };
+		A1000031 /* PanicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000031 /* PanicView.swift */; };
+		A1000032 /* WitnessPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000032 /* WitnessPromptView.swift */; };
+		A1000033 /* SecurityDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000033 /* SecurityDashboardView.swift */; };
+		A1000034 /* IncidentReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000034 /* IncidentReportView.swift */; };
+		A1000035 /* AppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000035 /* AppIntents.swift */; };
+		A1000036 /* IncidentMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000036 /* IncidentMapView.swift */; };
+		A1000037 /* AudioRecordingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000037 /* AudioRecordingService.swift */; };
+		A1000038 /* PostIncidentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000038 /* PostIncidentView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A2000001 /* CapsuleMeshApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleMeshApp.swift; sourceTree = "<group>"; };
+		A2000002 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		A2000023 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		A2000003 /* MessageType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageType.swift; sourceTree = "<group>"; };
+		A2000004 /* MeshMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshMessage.swift; sourceTree = "<group>"; };
+		A2000005 /* Peer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Peer.swift; sourceTree = "<group>"; };
+		A2000006 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
+		A2000007 /* MessageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStore.swift; sourceTree = "<group>"; };
+		A2000008 /* MeshNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshNetworkService.swift; sourceTree = "<group>"; };
+		A2000027 /* GatewayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayService.swift; sourceTree = "<group>"; };
+		A2000028 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		A2000029 /* SimulationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulationService.swift; sourceTree = "<group>"; };
+		A2000009 /* MeshViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshViewModel.swift; sourceTree = "<group>"; };
+		A2000010 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		A2000011 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
+		A2000012 /* SOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSView.swift; sourceTree = "<group>"; };
+		A2000013 /* ActionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionsView.swift; sourceTree = "<group>"; };
+		A2000014 /* TriageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriageView.swift; sourceTree = "<group>"; };
+		A2000015 /* ShelterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShelterView.swift; sourceTree = "<group>"; };
+		A2000016 /* MissingPersonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissingPersonView.swift; sourceTree = "<group>"; };
+		A2000017 /* BroadcastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastView.swift; sourceTree = "<group>"; };
+		A2000018 /* DirectMessageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectMessageView.swift; sourceTree = "<group>"; };
+		A2000019 /* PeersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeersView.swift; sourceTree = "<group>"; };
+		A2000020 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A2000024 /* MeshVisualizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshVisualizationView.swift; sourceTree = "<group>"; };
+		A2000025 /* NetworkMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMapView.swift; sourceTree = "<group>"; };
+		A2000026 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
+		A2000021 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A2000022 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A2000030 /* UserRole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserRole.swift; sourceTree = "<group>"; };
+		A2000031 /* PanicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanicView.swift; sourceTree = "<group>"; };
+		A2000032 /* WitnessPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WitnessPromptView.swift; sourceTree = "<group>"; };
+		A2000033 /* SecurityDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityDashboardView.swift; sourceTree = "<group>"; };
+		A2000034 /* IncidentReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentReportView.swift; sourceTree = "<group>"; };
+		A2000035 /* AppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntents.swift; sourceTree = "<group>"; };
+		A2000036 /* IncidentMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentMapView.swift; sourceTree = "<group>"; };
+		A2000037 /* AudioRecordingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecordingService.swift; sourceTree = "<group>"; };
+		A2000038 /* PostIncidentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostIncidentView.swift; sourceTree = "<group>"; };
+		A3000001 /* CapsuleMesh.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CapsuleMesh.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A4000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A5000001 = {
+			isa = PBXGroup;
+			children = (
+				A5000002 /* CapsuleMesh */,
+				A5000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A5000002 /* CapsuleMesh */ = {
+			isa = PBXGroup;
+			children = (
+				A2000001 /* CapsuleMeshApp.swift */,
+				A2000021 /* Info.plist */,
+				A2000022 /* Assets.xcassets */,
+				A5000004 /* Models */,
+				A5000005 /* Services */,
+				A5000006 /* ViewModels */,
+				A5000007 /* Views */,
+				A5000008 /* Utilities */,
+			);
+			path = CapsuleMesh;
+			sourceTree = "<group>";
+		};
+		A5000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A3000001 /* CapsuleMesh.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A5000004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A2000003 /* MessageType.swift */,
+				A2000004 /* MeshMessage.swift */,
+				A2000005 /* Peer.swift */,
+				A2000030 /* UserRole.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A5000005 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A2000006 /* DeviceIdentity.swift */,
+				A2000007 /* MessageStore.swift */,
+				A2000008 /* MeshNetworkService.swift */,
+				A2000027 /* GatewayService.swift */,
+				A2000028 /* LocationService.swift */,
+				A2000029 /* SimulationService.swift */,
+				A2000035 /* AppIntents.swift */,
+				A2000037 /* AudioRecordingService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A5000006 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A2000009 /* MeshViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A5000007 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A2000010 /* MainTabView.swift */,
+				A2000011 /* MessagesView.swift */,
+				A2000012 /* SOSView.swift */,
+				A2000031 /* PanicView.swift */,
+				A2000032 /* WitnessPromptView.swift */,
+				A2000033 /* SecurityDashboardView.swift */,
+				A2000034 /* IncidentReportView.swift */,
+				A2000036 /* IncidentMapView.swift */,
+				A2000038 /* PostIncidentView.swift */,
+				A2000013 /* ActionsView.swift */,
+				A2000014 /* TriageView.swift */,
+				A2000015 /* ShelterView.swift */,
+				A2000016 /* MissingPersonView.swift */,
+				A2000017 /* BroadcastView.swift */,
+				A2000018 /* DirectMessageView.swift */,
+				A2000019 /* PeersView.swift */,
+				A2000020 /* SettingsView.swift */,
+				A2000024 /* MeshVisualizationView.swift */,
+				A2000025 /* NetworkMapView.swift */,
+				A2000026 /* WelcomeView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A5000008 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				A2000002 /* Constants.swift */,
+				A2000023 /* Theme.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A6000001 /* CapsuleMesh */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A8000003 /* Build configuration list for PBXNativeTarget "CapsuleMesh" */;
+			buildPhases = (
+				A7000001 /* Sources */,
+				A4000001 /* Frameworks */,
+				A7000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CapsuleMesh;
+			productName = CapsuleMesh;
+			productReference = A3000001 /* CapsuleMesh.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A9000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2610;
+				TargetAttributes = {
+					A6000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A8000001 /* Build configuration list for PBXProject "CapsuleMesh" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A5000001;
+			productRefGroup = A5000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A6000001 /* CapsuleMesh */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A7000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000021 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A7000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001 /* CapsuleMeshApp.swift in Sources */,
+				A1000002 /* Constants.swift in Sources */,
+				A1000003 /* MessageType.swift in Sources */,
+				A1000004 /* MeshMessage.swift in Sources */,
+				A1000005 /* Peer.swift in Sources */,
+				A1000006 /* DeviceIdentity.swift in Sources */,
+				A1000007 /* MessageStore.swift in Sources */,
+				A1000008 /* MeshNetworkService.swift in Sources */,
+				A1000009 /* MeshViewModel.swift in Sources */,
+				A1000010 /* MainTabView.swift in Sources */,
+				A1000011 /* MessagesView.swift in Sources */,
+				A1000012 /* SOSView.swift in Sources */,
+				A1000013 /* ActionsView.swift in Sources */,
+				A1000014 /* TriageView.swift in Sources */,
+				A1000015 /* ShelterView.swift in Sources */,
+				A1000016 /* MissingPersonView.swift in Sources */,
+				A1000017 /* BroadcastView.swift in Sources */,
+				A1000018 /* DirectMessageView.swift in Sources */,
+				A1000019 /* PeersView.swift in Sources */,
+				A1000020 /* SettingsView.swift in Sources */,
+				A1000023 /* Theme.swift in Sources */,
+				A1000024 /* MeshVisualizationView.swift in Sources */,
+				A1000025 /* NetworkMapView.swift in Sources */,
+				A1000026 /* WelcomeView.swift in Sources */,
+				A1000027 /* GatewayService.swift in Sources */,
+				A1000028 /* LocationService.swift in Sources */,
+				A1000029 /* SimulationService.swift in Sources */,
+				A1000030 /* UserRole.swift in Sources */,
+				A1000031 /* PanicView.swift in Sources */,
+				A1000032 /* WitnessPromptView.swift in Sources */,
+				A1000033 /* SecurityDashboardView.swift in Sources */,
+				A1000034 /* IncidentReportView.swift in Sources */,
+				A1000035 /* AppIntents.swift in Sources */,
+				A1000036 /* IncidentMapView.swift in Sources */,
+				A1000037 /* AudioRecordingService.swift in Sources */,
+				A1000038 /* PostIncidentView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AA000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5649YX62A4;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AA000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5649YX62A4;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AA000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CapsuleMesh/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Mayday;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.capsulemesh.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CapsuleMesh/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Mayday;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.capsulemesh.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A8000001 /* Build configuration list for PBXProject "CapsuleMesh" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000001 /* Debug */,
+				AA000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A8000003 /* Build configuration list for PBXNativeTarget "CapsuleMesh" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000003 /* Debug */,
+				AA000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A9000001 /* Project object */;
+}
