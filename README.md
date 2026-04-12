@@ -180,20 +180,76 @@ Transcript analyzed by **Claude** (`claude-sonnet-4-20250514`) with a structured
 
 This gives dispatchers **actionable intelligence in seconds** -- threat level, specific action items, and a predicted escape direction -- not a raw audio file someone needs to listen to.
 
-### Stage 4: Escape Route Prediction
+### Stage 4: Escape Route Prediction (`mayday-route-intelligence/`)
 
-Claude's analysis feeds into a **route prediction model** that considers:
+This is a standalone **FastAPI-based prediction engine** with its own frontend dashboard. It uses a multi-signal weighted model trained on **298,878 real Philadelphia crime records** and **9,471 crime chain pairs** extracted from OpenDataPhilly.
 
-- **Street graph topology** -- walkable paths, alleys, one-way streets from the incident point
-- **Transit access points** -- SEPTA stations, bus stops within 500m (escape via public transit is the most common pattern in Philadelphia)
-- **Historical crime data** -- known escape corridors from past incidents in the same area
-- **Time of day** -- pedestrian density, lighting conditions, which routes are viable at night
-- **Suspect movement vector** -- direction of flight from witness reports and audio analysis
+#### The Algorithm: Three-Signal Weighted Fusion
 
-The model outputs **2-3 most likely escape routes** ranked by probability, which are:
-1. Highlighted on the dispatch dashboard map as orange dashed lines
-2. Pushed to responding officers' mobile maps
-3. Used to **pre-activate cameras** along the predicted path before the suspect reaches them
+The prediction engine scores 8 directional corridors (N, NE, E, SE, S, SW, W, NW) using three independent signals, then fuses them with calibrated weights:
+
+```
+Final Score(direction) = 0.55 * Crime Chain Signal
+                       + 0.30 * Infrastructure Signal
+                       + 0.15 * KDE Density Signal
+```
+
+**Signal 1: Crime Chain Analysis (55% weight)**
+
+We build "crime chains" from historical data — pairs of crimes committed by the same suspect within 120 minutes and 5km. Using Philadelphia's open crime database (2020-2025), we extract 9,471 chain pairs and compute the **bearing** (compass direction) from Crime A to Crime B.
+
+For any new incident location, we find all chains that originated within 1.5km and build a **directional probability distribution** — essentially: "when crimes happen here, which direction do suspects go next?"
+
+These distributions are pre-computed into 497 grid cells covering Philadelphia, stored as escape profiles in `escape_profiles.json`.
+
+**Signal 2: Infrastructure Scoring (30% weight)**
+
+For each direction, we score how much "escape-attractive" infrastructure exists:
+- **Subway stations** (BSL, MFL) — weighted 1.8x at night (quick anonymous escape)
+- **Regional rail stations** — weighted 1.2x (longer-range escape)
+- **Highway on-ramps** (I-76, I-95) — weighted 1.5x for firearm crimes (vehicle getaway)
+- MFL stations get a 0.3x penalty between 1-5 AM (reduced service)
+- All weighted by inverse distance
+
+**Signal 3: KDE Crime Density (15% weight)**
+
+A Kernel Density Estimation model (`scikit-learn`, bandwidth=0.003, haversine metric) fitted on all robbery locations. For each direction, we sample the density 1km out — suspects tend to move toward areas with higher ambient crime (familiarity, easier to blend in).
+
+#### Escape Point Ranking
+
+After scoring corridors, the engine ranks specific escape infrastructure (SEPTA stations, highway ramps) using a two-phase approach:
+1. **Fast pre-filter**: Haversine distance to all points within 5km, scored by corridor probability + crime chain references
+2. **Graph routing** (top 10 only): Actual walking/driving distance computed via `osmnx` shortest-path on Philadelphia's street graph (120,677 nodes)
+
+#### Interception Point Computation
+
+For the top 3 corridors, the engine places interception points at 60% of the distance between the incident and the nearest escape point in that direction. It uses the street graph to find the nearest named street at that position — giving dispatchers specific deployment instructions like "Unit 1 to Market Street [SW corridor]."
+
+#### Search Radius (Time-Expanded)
+
+When elapsed time is provided, the engine computes:
+- **Foot isochrone**: Convex hull of all street graph nodes reachable at 5 km/h
+- **Vehicle isochrone**: Same at 30 km/h
+- Lists of reachable SEPTA stations and highway ramps within each radius
+
+#### AI Tactical Briefing (GPT-4o with Tool Calling)
+
+The prediction results are passed to GPT-4o with **three tools** that let the AI query the live crime database before writing the briefing:
+
+| Tool | Purpose |
+|------|---------|
+| `query_crimes_nearby` | Find historical crimes within radius, filtered by time of day |
+| `get_corridor_chains` | Get real chain examples supporting a specific escape direction |
+| `get_area_crime_profile` | Neighborhood crime statistics (night %, top types) |
+
+GPT-4o calls these tools 1-3 times to gather evidence, then writes a 5-7 sentence dispatch-tone tactical briefing with specific chain data, station names, and unit deployment positions.
+
+#### Risk Calibration
+
+Risk thresholds are **data-driven**, calibrated from the actual escape profile distribution at startup:
+- CRITICAL: top corridor probability >= 75th percentile of all profiles
+- HIGH: >= 50th percentile (or any firearm incident above MODERATE)
+- MODERATE: below 50th percentile
 
 ---
 
@@ -405,18 +461,25 @@ mayday/
 |
 |-- server/
 |   |-- pigeon-dashboard/                    # Dispatch Intelligence Server
-|       |-- server.js                        # Express API
-|       |                                    #   - Incident routing + severity engine
-|       |                                    #   - Whisper transcription pipeline
-|       |                                    #   - Claude AI analysis
-|       |                                    #   - Camera grid controller
-|       |                                    #   - Escape route predictor
-|       |                                    #   - WebRTC signaling
-|       |                                    #   - Simulation engine (15 phases)
+|       |-- server.js                        # Express API + Whisper + Claude + WebRTC
 |       |-- public/
 |           |-- index.html                   # Dispatch dashboard (single-page app)
 |           |-- camera.html                  # WebRTC camera node page
-|           |-- logo.png                     # Mayday logo
+|
+|-- mayday-route-intelligence/               # Escape Route Prediction Engine
+|   |-- backend/
+|   |   |-- app/
+|   |   |   |-- main.py                      # FastAPI entry point
+|   |   |   |-- predictor.py                 # 3-signal weighted fusion engine
+|   |   |   |-- briefing.py                  # GPT-4o tactical briefing + tool calling
+|   |   |   |-- crime_chains.py              # Chain extraction + escape profiles
+|   |   |   |-- graph_builder.py             # OSMnx street graph (120K nodes)
+|   |   |   |-- data_loader.py               # Crime + SEPTA data ingestion
+|   |   |-- scripts/                         # Data download + preprocessing
+|   |   |-- data/                            # 298K crimes, 9.4K chains, 497 profiles
+|   |-- frontend/
+|   |   |-- index.html                       # Route prediction dashboard
+|   |-- start.sh                             # One-command startup
 |
 |-- docs/
 |   |-- mayday-logo.png                     # High-res logo (1024x1024)
