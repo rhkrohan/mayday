@@ -1,18 +1,278 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pursuit Intelligence — Philly Escape Route Prediction</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mayday — Escape Route Intelligence</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --black:#000;--white:#fff;--gray-800:#262626;--gray-600:#525252;--gray-400:#a3a3a3;
+            --red:#ef4444;--orange:#f97316;--green:#22c55e;--blue:#3b82f6;--purple:#a855f7;--yellow:#eab308;
+            --glass:rgba(0,0,0,0.82);--glass-border:rgba(255,255,255,0.08);
+        }
+        body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; background:var(--black); color:var(--white); height:100vh; overflow:hidden; -webkit-font-smoothing:antialiased; }
+        #map { position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; }
+        .leaflet-tile-pane { filter:invert(100%) hue-rotate(180deg) brightness(0.85) contrast(1.2) saturate(0.2); }
+        .leaflet-control-attribution { display:none; }
+        .leaflet-control-zoom { border:none!important; margin-bottom:100px!important; }
+        .leaflet-control-zoom a { background:rgba(0,0,0,0.85)!important; color:var(--white)!important; border:1px solid var(--glass-border)!important; width:36px!important; height:36px!important; line-height:36px!important; }
+        .leaflet-control-zoom a:first-child { border-radius:10px 10px 0 0!important; }
+        .leaflet-control-zoom a:last-child { border-radius:0 0 10px 10px!important; }
+        .top-bar { position:absolute; top:0; left:0; right:0; z-index:1000; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; background:linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0.4) 80%, transparent 100%); pointer-events:none; }
+        .top-bar > * { pointer-events:auto; }
+        .logo { display:flex; align-items:center; gap:10px; }
+        .logo img { width:36px; height:36px; border-radius:9px; }
+        .logo-text { font-size:20px; font-weight:700; }
+        .logo-sub { font-size:12px; text-transform:uppercase; letter-spacing:2px; color:var(--white); opacity:0.6; margin-left:10px; }
+        .status-badge { display:flex; align-items:center; gap:8px; padding:8px 16px; background:var(--glass); backdrop-filter:blur(20px); border:1px solid var(--glass-border); border-radius:20px; font-size:12px; }
+        .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); }
+        .status-dot.critical { background:var(--red); animation:pulse 1.5s infinite; }
+        .status-dot.high { background:var(--orange); animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.2)} }
+        .right-panel { position:absolute; top:68px; right:16px; bottom:20px; width:380px; z-index:1000; background:var(--glass); backdrop-filter:blur(24px); border-radius:18px; border:1px solid var(--glass-border); display:flex; flex-direction:column; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,0.4); }
+        .panel-header { padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.06); font-size:14px; font-weight:600; }
+        .panel-scroll { flex:1; overflow-y:auto; padding:14px; }
+        .panel-scroll::-webkit-scrollbar { width:4px; }
+        .panel-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:4px; }
+        .section { margin-bottom:16px; }
+        .section-label { font-size:10px; text-transform:uppercase; letter-spacing:1.2px; opacity:0.35; font-weight:600; margin-bottom:8px; }
+        .card { display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.04); border-radius:10px; margin-bottom:6px; border:1px solid rgba(255,255,255,0.05); }
+        .card.primary { border-color:var(--red); background:rgba(239,68,68,0.08); }
+        .card-icon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--white); flex-shrink:0; }
+        .card-info { flex:1; min-width:0; }
+        .card-title { font-size:13px; font-weight:600; }
+        .card-meta { font-size:11px; opacity:0.4; }
+        .card-value { font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; }
+        .briefing-box { padding:14px; background:rgba(168,85,247,0.08); border-radius:12px; border:1px solid rgba(168,85,247,0.15); font-size:13px; line-height:1.6; color:rgba(255,255,255,0.85); }
+        .briefing-label { font-size:10px; font-weight:700; color:var(--purple); text-transform:uppercase; margin-bottom:8px; }
+        .intercept-num { width:28px; height:28px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--white); flex-shrink:0; }
+        .input-panel { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); z-index:1000; display:flex; gap:8px; padding:10px 16px; background:var(--glass); backdrop-filter:blur(24px); border-radius:16px; border:1px solid var(--glass-border); }
+        .input-panel select, .input-panel input { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:var(--white); padding:8px 14px; font-size:13px; font-family:inherit; outline:none; }
+        .input-panel select option { background:#1a1a1a; }
+        .input-panel button { background:var(--red); border:none; color:var(--white); padding:8px 20px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+        .input-panel button:disabled { background:var(--gray-600); cursor:not-allowed; }
+        .incident-marker { width:16px; height:16px; background:var(--red); border-radius:50%; border:3px solid rgba(255,255,255,0.9); box-shadow:0 0 20px rgba(239,68,68,0.6); animation:pulse 1.5s infinite; }
+        .intercept-marker { width:12px; height:12px; background:var(--green); border-radius:50%; border:2px solid rgba(255,255,255,0.8); }
+        .escape-pt-marker { width:10px; height:10px; background:var(--blue); border-radius:50%; border:2px solid rgba(255,255,255,0.7); }
+        .loading { display:flex; align-items:center; justify-content:center; padding:40px; opacity:0.4; font-size:13px; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="top-bar">
+        <div class="logo">
+            <img src="/logo.png" alt="Mayday" onerror="this.style.display='none'">
+            <span class="logo-text">Mayday</span>
+            <span class="logo-sub">Escape Route Intelligence</span>
+        </div>
+        <div class="status-badge"><div class="status-dot" id="statusDot"></div><span id="statusText">Ready</span></div>
+    </div>
+    <div class="right-panel">
+        <div class="panel-header">Route Analysis</div>
+        <div class="panel-scroll" id="panel"><div class="loading">Click on the map to predict escape routes</div></div>
+    </div>
+    <div class="input-panel">
+        <select id="crimeType">
+            <option value="Robbery No Weapon">Robbery (Unarmed)</option>
+            <option value="Robbery Firearm">Robbery (Firearm)</option>
+            <option value="Robbery Knife">Robbery (Knife)</option>
+            <option value="Aggravated Assault Firearm">Assault (Firearm)</option>
+            <option value="Aggravated Assault No Weapon">Assault (Unarmed)</option>
+        </select>
+        <input type="time" id="timeInput" value="22:00">
+        <input type="number" id="elapsed" placeholder="Elapsed min" min="0" max="30" step="1" style="width:100px">
+        <button id="btn" onclick="go()">Predict</button>
+    </div>
+    <script>
+        var API = 'http://localhost:8000';
+        var map = L.map('map', {center:[39.9526,-75.1635], zoom:14, attributionControl:false});
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
+        var layers = [];
+
+        map.on('click', function(e) { predict(e.latlng.lat, e.latlng.lng); });
+
+        function go() {
+            var c = map.getCenter();
+            predict(c.lat, c.lng);
+        }
+
+        function clear() { layers.forEach(function(l){map.removeLayer(l)}); layers=[]; }
+
+        function predict(lat, lng) {
+            var el = parseFloat(document.getElementById('elapsed').value) || 0;
+            var body = {lat:lat, lng:lng, crime_type:document.getElementById('crimeType').value, time:document.getElementById('timeInput').value||'22:00'};
+            if (el > 0) body.elapsed_minutes = el;
+            document.getElementById('panel').textContent = 'Analyzing...';
+            document.getElementById('btn').disabled = true;
+            fetch(API + (el > 0 ? '/api/simulate' : '/api/predict'), {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)})
+                .then(function(r){return r.json()})
+                .then(function(d){render(d,lat,lng)})
+                .catch(function(e){document.getElementById('panel').textContent='Error: '+e.message})
+                .finally(function(){document.getElementById('btn').disabled=false});
+        }
+
+        function render(d, lat, lng) {
+            clear();
+            // Status
+            var dot = document.getElementById('statusDot');
+            dot.className = 'status-dot ' + d.risk_level.toLowerCase();
+            document.getElementById('statusText').textContent = d.risk_level + ' | ' + d.chain_count + ' chains';
+            // Incident
+            var im = L.marker([lat,lng],{icon:L.divIcon({html:'<div class="incident-marker"></div>',className:'',iconSize:[16,16],iconAnchor:[8,8]})}).addTo(map);
+            layers.push(im);
+            map.flyTo([lat,lng], 15, {duration:0.8});
+            // Corridors
+            var dC = {N:'#ef4444',NE:'#f97316',E:'#eab308',SE:'#22c55e',S:'#3b82f6',SW:'#8b5cf6',W:'#ec4899',NW:'#f43f5e'};
+            d.corridors.slice(0,4).forEach(function(c){
+                var b=c.bearing*Math.PI/180, dist=0.015*(c.probability/0.2);
+                var el=lat+dist*Math.cos(b), elg=lng+dist*Math.sin(b)/Math.cos(lat*Math.PI/180);
+                var l=L.polyline([[lat,lng],[el,elg]],{color:dC[c.direction]||'#ef4444',weight:Math.max(2,c.probability*15),opacity:0.7,dashArray:'8,6'}).addTo(map);
+                layers.push(l);
+            });
+            // Escape points
+            d.escape_points.slice(0,8).forEach(function(ep){
+                var m=L.marker([ep.lat,ep.lng],{icon:L.divIcon({html:'<div class="escape-pt-marker"></div>',className:'',iconSize:[10,10],iconAnchor:[5,5]})}).bindPopup(ep.name+' ('+ep.type+')').addTo(map);
+                layers.push(m);
+            });
+            // Interceptions
+            d.interceptions.forEach(function(ip,i){
+                var m=L.marker([ip.lat,ip.lng],{icon:L.divIcon({html:'<div class="intercept-marker"></div>',className:'',iconSize:[12,12],iconAnchor:[6,6]})}).bindPopup('Unit '+(i+1)+': '+ip.direction).addTo(map);
+                layers.push(m);
+            });
+            // Chain examples
+            (d.sample_chains||[]).forEach(function(sc){
+                var l=L.polyline([[sc.origin_lat,sc.origin_lng],[sc.dest_lat,sc.dest_lng]],{color:'#a855f7',weight:1.5,opacity:0.3,dashArray:'4,4'}).addTo(map);
+                layers.push(l);
+            });
+            // Search radius
+            if(d.search_radius){
+                if(d.search_radius.foot_polygon&&d.search_radius.foot_polygon.length>2){var fp=L.polygon(d.search_radius.foot_polygon,{color:'#22c55e',weight:2,opacity:0.5,fillOpacity:0.06,dashArray:'6,4'}).addTo(map);layers.push(fp);}
+                if(d.search_radius.vehicle_polygon&&d.search_radius.vehicle_polygon.length>2){var vp=L.polygon(d.search_radius.vehicle_polygon,{color:'#f97316',weight:2,opacity:0.4,fillOpacity:0.03,dashArray:'8,6'}).addTo(map);layers.push(vp);}
+            }
+            // Panel
+            buildPanel(d);
+        }
+
+        function buildPanel(d) {
+            var p = document.getElementById('panel');
+            while(p.firstChild) p.removeChild(p.firstChild);
+
+            // Briefing
+            if (d.briefing) {
+                var sec = el('div','section');
+                sec.appendChild(label('AI Tactical Briefing'));
+                var box = el('div','briefing-box');
+                var bl = el('div','briefing-label');
+                bl.textContent = 'Intelligence Assessment';
+                box.appendChild(bl);
+                var bt = document.createTextNode(d.briefing);
+                box.appendChild(bt);
+                sec.appendChild(box);
+                p.appendChild(sec);
+            }
+
+            // Corridors
+            var cs = el('div','section');
+            cs.appendChild(label('Escape Corridors (' + d.corridors.length + ')'));
+            d.corridors.forEach(function(c, i) {
+                var card = el('div', i===0?'card primary':'card');
+                var icon = el('div','card-icon');
+                icon.style.background = i===0?'var(--red)':'rgba(255,255,255,0.1)';
+                icon.textContent = c.direction;
+                card.appendChild(icon);
+                var info = el('div','card-info');
+                var t = el('div','card-title'); t.textContent = c.direction + ' Corridor'; info.appendChild(t);
+                var m = el('div','card-meta'); m.textContent = c.historical_chain_count + ' historical chains'; info.appendChild(m);
+                card.appendChild(info);
+                var v = el('div','card-value');
+                v.textContent = (c.probability*100).toFixed(1)+'%';
+                v.style.color = c.probability > 0.2 ? 'var(--red)' : 'var(--white)';
+                card.appendChild(v);
+                cs.appendChild(card);
+            });
+            p.appendChild(cs);
+
+            // Escape points
+            if (d.escape_points.length > 0) {
+                var es = el('div','section');
+                es.appendChild(label('Transit Escape Points (' + d.escape_points.length + ')'));
+                d.escape_points.slice(0,6).forEach(function(ep){
+                    var card = el('div','card');
+                    var icon = el('div','card-icon');
+                    icon.style.background = ep.type==='subway'?'var(--blue)':ep.type==='highway'?'var(--orange)':'var(--purple)';
+                    icon.textContent = ep.type.charAt(0).toUpperCase();
+                    card.appendChild(icon);
+                    var info = el('div','card-info');
+                    var t = el('div','card-title'); t.textContent = ep.name; info.appendChild(t);
+                    var m = el('div','card-meta'); m.textContent = ep.type + (ep.line?' ('+ep.line+')':'') + ' | ' + ep.distance_meters + 'm'; info.appendChild(m);
+                    card.appendChild(info);
+                    var v = el('div','card-value');
+                    v.textContent = (ep.probability*100).toFixed(0)+'%';
+                    v.style.color = ep.probability>0.15?'var(--orange)':'var(--gray-400)';
+                    v.style.fontSize = '12px';
+                    card.appendChild(v);
+                    es.appendChild(card);
+                });
+                p.appendChild(es);
+            }
+
+            // Interceptions
+            if (d.interceptions.length > 0) {
+                var is2 = el('div','section');
+                is2.appendChild(label('Interception Points'));
+                d.interceptions.forEach(function(ip,i){
+                    var card = el('div','card');
+                    card.style.background = 'rgba(34,197,94,0.06)';
+                    card.style.borderColor = 'rgba(34,197,94,0.15)';
+                    var num = el('div','intercept-num'); num.textContent = i+1; card.appendChild(num);
+                    var info = el('div','card-info');
+                    var t = el('div','card-title'); t.textContent = ip.direction + ' corridor'; info.appendChild(t);
+                    var m = el('div','card-meta'); m.textContent = ip.street_name || (ip.lat.toFixed(4)+', '+ip.lng.toFixed(4)); info.appendChild(m);
+                    card.appendChild(info);
+                    var v = el('div','card-value'); v.textContent=(ip.probability*100).toFixed(0)+'%'; v.style.color='var(--green)'; v.style.fontSize='12px'; card.appendChild(v);
+                    is2.appendChild(card);
+                });
+                p.appendChild(is2);
+            }
+
+            // Search radius
+            if (d.search_radius) {
+                var sr = d.search_radius;
+                var ss = el('div','section');
+                ss.appendChild(label('Search Radius (' + sr.elapsed_minutes + ' min)'));
+                var box2 = el('div','card');
+                box2.style.display = 'block';
+                box2.style.fontSize = '12px';
+                box2.style.lineHeight = '1.8';
+                var text = 'Foot: ' + sr.foot_radius_km + 'km | Vehicle: ' + sr.vehicle_radius_km + 'km';
+                if (sr.reachable_stations.length > 0) text += '\nStations: ' + sr.reachable_stations.join(', ');
+                if (sr.reachable_highways.length > 0) text += '\nHighways: ' + sr.reachable_highways.join(', ');
+                box2.textContent = text;
+                box2.style.whiteSpace = 'pre-wrap';
+                ss.appendChild(box2);
+                p.appendChild(ss);
+            }
+
+            // Footer
+            var ft = el('div','');
+            ft.style.cssText = 'padding:10px;text-align:center;font-size:11px;opacity:0.3';
+            ft.textContent = d.chain_count + ' crime chains analyzed | ' + (d.is_night?'Night':'Day') + ' conditions';
+            p.appendChild(ft);
+        }
+
+        function el(tag, cls) { var e = document.createElement(tag); if(cls) e.className = cls; return e; }
+        function label(text) { var l = el('div','section-label'); l.textContent = text; return l; }
+
+        // Health check
+        fetch(API+'/api/health').then(function(r){return r.json()}).then(function(h){
+            if(h.status==='ok') document.getElementById('statusText').textContent=h.graph_nodes.toLocaleString()+' nodes | '+h.crime_records.toLocaleString()+' crimes';
+        }).catch(function(){
+            document.getElementById('statusText').textContent='Server offline';
+            document.getElementById('statusDot').className='status-dot';
+        });
+    </script>
+</body>
 </html>

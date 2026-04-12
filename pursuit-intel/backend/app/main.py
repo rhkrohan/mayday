@@ -36,7 +36,7 @@ predictor: EscapeRoutePredictor | None = None
 async def lifespan(app: FastAPI):
     global predictor
     logger.info("=" * 60)
-    logger.info("PURSUIT INTELLIGENCE — startup sequence")
+    logger.info("MAYDAY ESCAPE ROUTE INTELLIGENCE — startup sequence")
     logger.info("=" * 60)
 
     t_total = time.time()
@@ -86,13 +86,13 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    logger.info("Shutting down Pursuit Intelligence...")
+    logger.info("Shutting down Mayday Route Intelligence...")
 
 
 app = FastAPI(
-    title="Pursuit Intelligence API",
-    description="Philly escape route prediction system — Philly Codefest 2026",
-    version="1.0.0",
+    title="Mayday Escape Route Intelligence API",
+    description="AI-powered escape route prediction engine for Philadelphia — Codefest 2026",
+    version="2.0.0",
     lifespan=lifespan
 )
 
