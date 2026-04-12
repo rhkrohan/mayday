@@ -17,8 +17,17 @@
   <img src="https://img.shields.io/badge/Routing-ML%20Escape%20Prediction-orange?style=flat-square" />
 </p>
 
-<!-- Add demo video here -->
-<!-- [![Watch Demo](https://img.shields.io/badge/Watch%20Demo-Video-red?style=for-the-badge)](VIDEO_LINK) -->
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=ZVi5NP-ow3w">
+    <img src="https://img.youtube.com/vi/ZVi5NP-ow3w/maxresdefault.jpg" alt="Watch Demo" width="700" style="border-radius: 12px;" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=ZVi5NP-ow3w">
+    <img src="https://img.shields.io/badge/Watch%20Full%20Demo-YouTube-red?style=for-the-badge&logo=youtube" />
+  </a>
+</p>
 
 ---
 
