@@ -532,6 +532,14 @@ node server.js
 
 ---
 
+## Team
+
+- [Rohan](https://github.com/rhkrohan)
+- [Mubashir](https://github.com/Mubashir2431)
+- [Hamza Sarfraz](https://github.com/hamza-sarfraz)
+
+---
+
 <p align="center">
   <strong>When the network fails, the mesh prevails.</strong>
 </p>
